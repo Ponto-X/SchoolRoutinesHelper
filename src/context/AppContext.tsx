@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { supabase } from "@/lib/supabase";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type TaskStatus = "pendente" | "em_andamento" | "concluida" | "atrasada";
 
@@ -62,35 +63,7 @@ export interface AuthUser {
   role: string;
 }
 
-// ─── Seed data ────────────────────────────────────────────────────────────────
-
-const SEED_TASKS: Task[] = [
-  { id: "t1", title: "Preparar painéis da Via Sacra", description: "Montar os painéis para o evento", assignee: "Coord. Ana", status: "pendente", dueDate: "2026-03-27", createdAt: "2026-03-20T08:00:00Z" },
-  { id: "t2", title: "Enviar comunicado reunião de pais", description: "Mandar mensagem para os pais do 3º ano", assignee: "Secretaria", status: "em_andamento", dueDate: "2026-03-28", createdAt: "2026-03-20T08:00:00Z" },
-  { id: "t3", title: "Revisar roteiro Via Sacra", description: "Revisar o roteiro com a coordenação", assignee: "Coord. Paula", status: "concluida", dueDate: "2026-03-25", createdAt: "2026-03-20T08:00:00Z" },
-  { id: "t4", title: "Atender mãe do aluno atípico", description: "Agendar reunião para conversar", assignee: "Coord. Ana", status: "atrasada", dueDate: "2026-03-24", createdAt: "2026-03-20T08:00:00Z" },
-];
-
-const SEED_EVENTS: Event[] = [
-  { id: "e1", title: "Via Sacra", date: "2026-03-28", checklist: [{ id: "c1", text: "Preparar painéis", done: false }, { id: "c2", text: "Criar roteiro", done: true }, { id: "c3", text: "Comunicar pais", done: false }], createdAt: "2026-03-20T08:00:00Z" },
-  { id: "e2", title: "Reunião de Pais - 3º Ano", date: "2026-04-01", checklist: [{ id: "c4", text: "Preparar pauta", done: false }, { id: "c5", text: "Enviar convite", done: false }], createdAt: "2026-03-20T08:00:00Z" },
-  { id: "e3", title: "Feira de Ciências", date: "2026-04-10", checklist: [{ id: "c6", text: "Definir projetos", done: false }, { id: "c7", text: "Reservar espaço", done: true }, { id: "c8", text: "Comunicar professores", done: false }], createdAt: "2026-03-20T08:00:00Z" },
-];
-
-const SEED_CONTACTS: Contact[] = [
-  { id: "ct1", studentName: "João Silva", parentName: "Ana Silva", phone: "5511999990001", turma: "3º Ano A", createdAt: "2026-03-20T08:00:00Z" },
-  { id: "ct2", studentName: "Maria Santos", parentName: "Carlos Santos", phone: "5511999990002", turma: "2º Ano B", createdAt: "2026-03-20T08:00:00Z" },
-  { id: "ct3", studentName: "Pedro Oliveira", parentName: "Fernanda Oliveira", phone: "5511999990003", turma: "1º Ano A", createdAt: "2026-03-20T08:00:00Z" },
-  { id: "ct4", studentName: "Lucas Costa", parentName: "Juliana Costa", phone: "5511999990004", turma: "3º Ano B", createdAt: "2026-03-20T08:00:00Z" },
-];
-
-const SEED_ABSENCES: Absence[] = [
-  { id: "a1", studentName: "João Silva", turma: "3º Ano A", date: "2026-03-26", reason: "", notified: false, createdAt: "2026-03-26T07:00:00Z" },
-  { id: "a2", studentName: "Maria Santos", turma: "2º Ano B", date: "2026-03-26", reason: "Doente", notified: true, notifiedAt: "2026-03-26T08:30:00Z", createdAt: "2026-03-26T07:00:00Z" },
-  { id: "a3", studentName: "Pedro Oliveira", turma: "1º Ano A", date: "2026-03-26", reason: "", notified: false, createdAt: "2026-03-26T07:00:00Z" },
-];
-
-// ─── Credentials (static users for auth without backend) ─────────────────────
+// ─── Auth (static users — swap para Supabase Auth quando necessário) ──────────
 
 const VALID_USERS: Record<string, { password: string; user: AuthUser }> = {
   "diretora@colegio21.com.br": { password: "admin123", user: { name: "Maria", email: "diretora@colegio21.com.br", role: "Diretora" } },
@@ -98,94 +71,153 @@ const VALID_USERS: Record<string, { password: string; user: AuthUser }> = {
   "secretaria@colegio21.com.br": { password: "admin123", user: { name: "Paula", email: "secretaria@colegio21.com.br", role: "Secretaria" } },
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── DB row mappers ───────────────────────────────────────────────────────────
 
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+function mapTask(row: Record<string, unknown>): Task {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    description: (row.description as string) || "",
+    assignee: row.assignee as string,
+    status: row.status as TaskStatus,
+    dueDate: row.due_date as string,
+    createdAt: row.created_at as string,
+  };
 }
 
-function loadFromStorage<T>(key: string, seed: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : seed;
-  } catch {
-    return seed;
-  }
+function mapEvent(row: Record<string, unknown>, items: ChecklistItem[]): Event {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    date: row.date as string,
+    checklist: items,
+    createdAt: row.created_at as string,
+  };
 }
 
-function saveToStorage<T>(key: string, value: T) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // storage full or unavailable – silent fail
-  }
+function mapChecklistItem(row: Record<string, unknown>): ChecklistItem {
+  return { id: row.id as string, text: row.text as string, done: row.done as boolean };
+}
+
+function mapContact(row: Record<string, unknown>): Contact {
+  return {
+    id: row.id as string,
+    studentName: row.student_name as string,
+    parentName: row.parent_name as string,
+    phone: row.phone as string,
+    turma: row.turma as string,
+    createdAt: row.created_at as string,
+  };
+}
+
+function mapAbsence(row: Record<string, unknown>): Absence {
+  return {
+    id: row.id as string,
+    studentName: row.student_name as string,
+    turma: row.turma as string,
+    date: row.date as string,
+    reason: (row.reason as string) || "",
+    notified: row.notified as boolean,
+    notifiedAt: row.notified_at as string | undefined,
+    createdAt: row.created_at as string,
+  };
+}
+
+function mapMessageLog(row: Record<string, unknown>): MessageLog {
+  return {
+    id: row.id as string,
+    recipient: row.recipient as string,
+    message: row.message as string,
+    template: row.template as string,
+    sentAt: row.sent_at as string,
+  };
 }
 
 // ─── Context types ────────────────────────────────────────────────────────────
 
 interface AppContextValue {
-  // Auth
   user: AuthUser | null;
   login: (email: string, password: string) => boolean;
   logout: () => void;
 
-  // Tasks
   tasks: Task[];
-  addTask: (data: Omit<Task, "id" | "createdAt">) => void;
-  updateTask: (id: string, data: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
+  loading: boolean;
+  addTask: (data: Omit<Task, "id" | "createdAt">) => Promise<void>;
+  updateTask: (id: string, data: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
 
-  // Events
   events: Event[];
-  addEvent: (data: Omit<Event, "id" | "createdAt">) => void;
-  updateEvent: (id: string, data: Partial<Event>) => void;
-  deleteEvent: (id: string) => void;
-  addChecklistItem: (eventId: string, text: string) => void;
-  toggleChecklistItem: (eventId: string, itemId: string) => void;
-  deleteChecklistItem: (eventId: string, itemId: string) => void;
+  addEvent: (data: Omit<Event, "id" | "createdAt">) => Promise<void>;
+  updateEvent: (id: string, data: Partial<Event>) => Promise<void>;
+  deleteEvent: (id: string) => Promise<void>;
+  addChecklistItem: (eventId: string, text: string) => Promise<void>;
+  toggleChecklistItem: (eventId: string, itemId: string) => Promise<void>;
+  deleteChecklistItem: (eventId: string, itemId: string) => Promise<void>;
 
-  // Contacts
   contacts: Contact[];
-  addContact: (data: Omit<Contact, "id" | "createdAt">) => void;
-  updateContact: (id: string, data: Partial<Contact>) => void;
-  deleteContact: (id: string) => void;
+  addContact: (data: Omit<Contact, "id" | "createdAt">) => Promise<void>;
+  updateContact: (id: string, data: Partial<Contact>) => Promise<void>;
+  deleteContact: (id: string) => Promise<void>;
 
-  // Absences
   absences: Absence[];
-  addAbsence: (data: Omit<Absence, "id" | "createdAt" | "notified">) => void;
-  updateAbsence: (id: string, data: Partial<Absence>) => void;
-  deleteAbsence: (id: string) => void;
-  notifyParent: (id: string) => void;
+  addAbsence: (data: Omit<Absence, "id" | "createdAt" | "notified">) => Promise<void>;
+  updateAbsence: (id: string, data: Partial<Absence>) => Promise<void>;
+  deleteAbsence: (id: string) => Promise<void>;
+  notifyParent: (id: string) => Promise<void>;
 
-  // Messages
   messageLogs: MessageLog[];
-  sendMessage: (recipient: string, message: string, template: string) => void;
+  sendMessage: (recipient: string, message: string, template: string) => Promise<void>;
 }
-
-// ─── Context ──────────────────────────────────────────────────────────────────
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
-    try {
-      const s = localStorage.getItem("auth_user");
-      return s ? JSON.parse(s) : null;
-    } catch { return null; }
+    try { const s = localStorage.getItem("auth_user"); return s ? JSON.parse(s) : null; }
+    catch { return null; }
   });
 
-  const [tasks, setTasks] = useState<Task[]>(() => loadFromStorage("tasks", SEED_TASKS));
-  const [events, setEvents] = useState<Event[]>(() => loadFromStorage("events", SEED_EVENTS));
-  const [contacts, setContacts] = useState<Contact[]>(() => loadFromStorage("contacts", SEED_CONTACTS));
-  const [absences, setAbsences] = useState<Absence[]>(() => loadFromStorage("absences", SEED_ABSENCES));
-  const [messageLogs, setMessageLogs] = useState<MessageLog[]>(() => loadFromStorage("message_logs", []));
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [absences, setAbsences] = useState<Absence[]>([]);
+  const [messageLogs, setMessageLogs] = useState<MessageLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Persist on every change
-  useEffect(() => { saveToStorage("tasks", tasks); }, [tasks]);
-  useEffect(() => { saveToStorage("events", events); }, [events]);
-  useEffect(() => { saveToStorage("contacts", contacts); }, [contacts]);
-  useEffect(() => { saveToStorage("absences", absences); }, [absences]);
-  useEffect(() => { saveToStorage("message_logs", messageLogs); }, [messageLogs]);
+  // ── Load all data from Supabase ──────────────────────────────────────────
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [tasksRes, eventsRes, itemsRes, contactsRes, absencesRes, logsRes] = await Promise.all([
+        supabase.from("tasks").select("*").order("created_at", { ascending: false }),
+        supabase.from("events").select("*").order("date", { ascending: true }),
+        supabase.from("checklist_items").select("*").order("created_at", { ascending: true }),
+        supabase.from("contacts").select("*").order("student_name", { ascending: true }),
+        supabase.from("absences").select("*").order("date", { ascending: false }),
+        supabase.from("message_logs").select("*").order("sent_at", { ascending: false }),
+      ]);
+
+      setTasks((tasksRes.data || []).map(r => mapTask(r as Record<string, unknown>)));
+
+      const allItems = (itemsRes.data || []).map(r => ({ ...mapChecklistItem(r as Record<string, unknown>), eventId: (r as Record<string, unknown>).event_id as string }));
+      setEvents((eventsRes.data || []).map(r => {
+        const row = r as Record<string, unknown>;
+        const items = allItems.filter(i => i.eventId === row.id).map(({ ...item }) => item as ChecklistItem);
+        return mapEvent(row, items);
+      }));
+
+      setContacts((contactsRes.data || []).map(r => mapContact(r as Record<string, unknown>)));
+      setAbsences((absencesRes.data || []).map(r => mapAbsence(r as Record<string, unknown>)));
+      setMessageLogs((logsRes.data || []).map(r => mapMessageLog(r as Record<string, unknown>)));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
 
@@ -193,7 +225,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const entry = VALID_USERS[email.toLowerCase()];
     if (!entry || entry.password !== password) return false;
     setUser(entry.user);
-    saveToStorage("auth_user", entry.user);
+    localStorage.setItem("auth_user", JSON.stringify(entry.user));
     return true;
   }, []);
 
@@ -204,106 +236,141 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // ── Tasks ─────────────────────────────────────────────────────────────────
 
-  const addTask = useCallback((data: Omit<Task, "id" | "createdAt">) => {
-    setTasks(prev => [...prev, { ...data, id: uid(), createdAt: new Date().toISOString() }]);
+  const addTask = useCallback(async (data: Omit<Task, "id" | "createdAt">) => {
+    const { data: row } = await supabase.from("tasks").insert({
+      title: data.title, description: data.description,
+      assignee: data.assignee, status: data.status, due_date: data.dueDate,
+    }).select().single();
+    if (row) setTasks(prev => [mapTask(row as Record<string, unknown>), ...prev]);
   }, []);
 
-  const updateTask = useCallback((id: string, data: Partial<Task>) => {
+  const updateTask = useCallback(async (id: string, data: Partial<Task>) => {
+    const updates: Record<string, unknown> = {};
+    if (data.title !== undefined) updates.title = data.title;
+    if (data.description !== undefined) updates.description = data.description;
+    if (data.assignee !== undefined) updates.assignee = data.assignee;
+    if (data.status !== undefined) updates.status = data.status;
+    if (data.dueDate !== undefined) updates.due_date = data.dueDate;
+    await supabase.from("tasks").update(updates).eq("id", id);
     setTasks(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
   }, []);
 
-  const deleteTask = useCallback((id: string) => {
+  const deleteTask = useCallback(async (id: string) => {
+    await supabase.from("tasks").delete().eq("id", id);
     setTasks(prev => prev.filter(t => t.id !== id));
   }, []);
 
   // ── Events ────────────────────────────────────────────────────────────────
 
-  const addEvent = useCallback((data: Omit<Event, "id" | "createdAt">) => {
-    setEvents(prev => [...prev, { ...data, id: uid(), createdAt: new Date().toISOString() }]);
+  const addEvent = useCallback(async (data: Omit<Event, "id" | "createdAt">) => {
+    const { data: row } = await supabase.from("events").insert({ title: data.title, date: data.date }).select().single();
+    if (row) setEvents(prev => [...prev, mapEvent(row as Record<string, unknown>,[])]);
   }, []);
 
-  const updateEvent = useCallback((id: string, data: Partial<Event>) => {
+  const updateEvent = useCallback(async (id: string, data: Partial<Event>) => {
+    const updates: Record<string, unknown> = {};
+    if (data.title !== undefined) updates.title = data.title;
+    if (data.date !== undefined) updates.date = data.date;
+    await supabase.from("events").update(updates).eq("id", id);
     setEvents(prev => prev.map(e => e.id === id ? { ...e, ...data } : e));
   }, []);
 
-  const deleteEvent = useCallback((id: string) => {
+  const deleteEvent = useCallback(async (id: string) => {
+    await supabase.from("events").delete().eq("id", id);
     setEvents(prev => prev.filter(e => e.id !== id));
   }, []);
 
-  const addChecklistItem = useCallback((eventId: string, text: string) => {
-    setEvents(prev => prev.map(e =>
-      e.id === eventId
-        ? { ...e, checklist: [...e.checklist, { id: uid(), text, done: false }] }
-        : e
-    ));
+  const addChecklistItem = useCallback(async (eventId: string, text: string) => {
+    const { data: row } = await supabase.from("checklist_items").insert({ event_id: eventId, text, done: false }).select().single();
+    if (row) {
+      const item = mapChecklistItem(row as Record<string, unknown>);
+      setEvents(prev => prev.map(e => e.id === eventId ? { ...e, checklist: [...e.checklist, item] } : e));
+    }
   }, []);
 
-  const toggleChecklistItem = useCallback((eventId: string, itemId: string) => {
+  const toggleChecklistItem = useCallback(async (eventId: string, itemId: string) => {
+    const event = events.find(e => e.id === eventId);
+    const item = event?.checklist.find(c => c.id === itemId);
+    if (!item) return;
+    await supabase.from("checklist_items").update({ done: !item.done }).eq("id", itemId);
     setEvents(prev => prev.map(e =>
-      e.id === eventId
-        ? { ...e, checklist: e.checklist.map(c => c.id === itemId ? { ...c, done: !c.done } : c) }
-        : e
+      e.id === eventId ? { ...e, checklist: e.checklist.map(c => c.id === itemId ? { ...c, done: !c.done } : c) } : e
     ));
-  }, []);
+  }, [events]);
 
-  const deleteChecklistItem = useCallback((eventId: string, itemId: string) => {
+  const deleteChecklistItem = useCallback(async (eventId: string, itemId: string) => {
+    await supabase.from("checklist_items").delete().eq("id", itemId);
     setEvents(prev => prev.map(e =>
-      e.id === eventId
-        ? { ...e, checklist: e.checklist.filter(c => c.id !== itemId) }
-        : e
+      e.id === eventId ? { ...e, checklist: e.checklist.filter(c => c.id !== itemId) } : e
     ));
   }, []);
 
   // ── Contacts ──────────────────────────────────────────────────────────────
 
-  const addContact = useCallback((data: Omit<Contact, "id" | "createdAt">) => {
-    setContacts(prev => [...prev, { ...data, id: uid(), createdAt: new Date().toISOString() }]);
+  const addContact = useCallback(async (data: Omit<Contact, "id" | "createdAt">) => {
+    const { data: row } = await supabase.from("contacts").insert({
+      student_name: data.studentName, parent_name: data.parentName,
+      phone: data.phone, turma: data.turma,
+    }).select().single();
+    if (row) setContacts(prev => [...prev, mapContact(row as Record<string, unknown>)]);
   }, []);
 
-  const updateContact = useCallback((id: string, data: Partial<Contact>) => {
+  const updateContact = useCallback(async (id: string, data: Partial<Contact>) => {
+    const updates: Record<string, unknown> = {};
+    if (data.studentName !== undefined) updates.student_name = data.studentName;
+    if (data.parentName !== undefined) updates.parent_name = data.parentName;
+    if (data.phone !== undefined) updates.phone = data.phone;
+    if (data.turma !== undefined) updates.turma = data.turma;
+    await supabase.from("contacts").update(updates).eq("id", id);
     setContacts(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
   }, []);
 
-  const deleteContact = useCallback((id: string) => {
+  const deleteContact = useCallback(async (id: string) => {
+    await supabase.from("contacts").delete().eq("id", id);
     setContacts(prev => prev.filter(c => c.id !== id));
   }, []);
 
   // ── Absences ──────────────────────────────────────────────────────────────
 
-  const addAbsence = useCallback((data: Omit<Absence, "id" | "createdAt" | "notified">) => {
-    setAbsences(prev => [...prev, { ...data, id: uid(), notified: false, createdAt: new Date().toISOString() }]);
+  const addAbsence = useCallback(async (data: Omit<Absence, "id" | "createdAt" | "notified">) => {
+    const { data: row } = await supabase.from("absences").insert({
+      student_name: data.studentName, turma: data.turma,
+      date: data.date, reason: data.reason, notified: false,
+    }).select().single();
+    if (row) setAbsences(prev => [mapAbsence(row as Record<string, unknown>), ...prev]);
   }, []);
 
-  const updateAbsence = useCallback((id: string, data: Partial<Absence>) => {
+  const updateAbsence = useCallback(async (id: string, data: Partial<Absence>) => {
+    const updates: Record<string, unknown> = {};
+    if (data.studentName !== undefined) updates.student_name = data.studentName;
+    if (data.turma !== undefined) updates.turma = data.turma;
+    if (data.date !== undefined) updates.date = data.date;
+    if (data.reason !== undefined) updates.reason = data.reason;
+    await supabase.from("absences").update(updates).eq("id", id);
     setAbsences(prev => prev.map(a => a.id === id ? { ...a, ...data } : a));
   }, []);
 
-  const deleteAbsence = useCallback((id: string) => {
+  const deleteAbsence = useCallback(async (id: string) => {
+    await supabase.from("absences").delete().eq("id", id);
     setAbsences(prev => prev.filter(a => a.id !== id));
   }, []);
 
-  const notifyParent = useCallback((id: string) => {
-    setAbsences(prev => prev.map(a =>
-      a.id === id ? { ...a, notified: true, notifiedAt: new Date().toISOString() } : a
-    ));
+  const notifyParent = useCallback(async (id: string) => {
+    const notifiedAt = new Date().toISOString();
+    await supabase.from("absences").update({ notified: true, notified_at: notifiedAt }).eq("id", id);
+    setAbsences(prev => prev.map(a => a.id === id ? { ...a, notified: true, notifiedAt } : a));
   }, []);
 
   // ── Messages ──────────────────────────────────────────────────────────────
 
-  const sendMessage = useCallback((recipient: string, message: string, template: string) => {
-    const log: MessageLog = {
-      id: uid(),
-      recipient,
-      message,
-      template,
-      sentAt: new Date().toISOString(),
-    };
-    setMessageLogs(prev => [log, ...prev]);
+  const sendMessage = useCallback(async (recipient: string, message: string, template: string) => {
+    const { data: row } = await supabase.from("message_logs").insert({ recipient, message, template }).select().single();
+    if (row) setMessageLogs(prev => [mapMessageLog(row as Record<string, unknown>), ...prev]);
   }, []);
 
   return (
     <AppContext.Provider value={{
-      user, login, logout,
+      user, login, logout, loading,
       tasks, addTask, updateTask, deleteTask,
       events, addEvent, updateEvent, deleteEvent, addChecklistItem, toggleChecklistItem, deleteChecklistItem,
       contacts, addContact, updateContact, deleteContact,
