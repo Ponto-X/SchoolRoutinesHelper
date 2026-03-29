@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import { TURMAS, canAccess } from "@/lib/constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -300,26 +301,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const userCanAccess = useCallback((module: string) => canAccess(user?.role, module), [user]);
 
-  // ── WhatsApp (Stevo.chat) ─────────────────────────────────────────────────
+  // ── WhatsApp — delegates to lib/whatsapp.ts (supports Evolution, Meta, Stevo) ──
 
-  const sendWhatsApp = useCallback(async (phone: string, message: string): Promise<{ ok: boolean; error?: string }> => {
-    const apiKey = import.meta.env.VITE_STEVO_API_KEY;
-    if (!apiKey) return { ok: false, error: "VITE_STEVO_API_KEY não configurada" };
-
-    try {
-      const res = await fetch("https://api.stevo.chat/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-        body: JSON.stringify({ phone, message }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        return { ok: false, error: (err as Record<string, unknown>).message as string || `HTTP ${res.status}` };
-      }
-      return { ok: true };
-    } catch (e) {
-      return { ok: false, error: String(e) };
-    }
+  const sendWhatsApp = useCallback(async (phone: string, message: string) => {
+    return sendWhatsAppMessage(phone, message);
   }, []);
 
   // ── Tasks ─────────────────────────────────────────────────────────────────

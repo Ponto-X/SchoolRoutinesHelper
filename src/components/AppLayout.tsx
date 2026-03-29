@@ -2,12 +2,12 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Loader2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 export default function AppLayout() {
   const navigate = useNavigate();
-  const { user, logout } = useApp();
+  const { user, logout, loading } = useApp();
 
   const handleLogout = () => {
     logout();
@@ -22,6 +22,7 @@ export default function AppLayout() {
           <header className="h-14 flex items-center justify-between border-b bg-card px-4">
             <SidebarTrigger className="ml-1" />
             <div className="flex items-center gap-3">
+              {loading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
               <div className="flex items-center gap-2 text-sm">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{user?.name}</span>
@@ -33,7 +34,14 @@ export default function AppLayout() {
             </div>
           </header>
           <main className="flex-1 p-6 overflow-auto">
-            <Outlet />
+            {loading ? (
+              <div className="flex items-center justify-center h-48 gap-3 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm">Carregando dados…</span>
+              </div>
+            ) : (
+              <Outlet />
+            )}
           </main>
         </div>
       </div>

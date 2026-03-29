@@ -1,43 +1,38 @@
 import {
-  LayoutDashboard,
-  CheckSquare,
-  Calendar,
-  MessageSquare,
-  UserX,
-  Users,
+  LayoutDashboard, CheckSquare, Calendar,
+  MessageSquare, UserX, Users,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  useSidebar,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  SidebarHeader, useSidebar,
 } from "@/components/ui/sidebar";
 import logoImg from "@/assets/logo-colegio.png";
+import { useApp } from "@/context/AppContext";
 
-const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Tarefas", url: "/tarefas", icon: CheckSquare },
-  { title: "Eventos", url: "/eventos", icon: Calendar },
-  { title: "Contatos", url: "/contatos", icon: Users },
-  { title: "Faltas", url: "/faltas", icon: UserX },
-  { title: "Comunicação", url: "/comunicacao", icon: MessageSquare },
+const ALL_ITEMS = [
+  { title: "Dashboard",    url: "/",            icon: LayoutDashboard, module: "dashboard"   },
+  { title: "Tarefas",      url: "/tarefas",     icon: CheckSquare,     module: "tasks"       },
+  { title: "Eventos",      url: "/eventos",     icon: Calendar,        module: "events"      },
+  { title: "Contatos",     url: "/contatos",    icon: Users,           module: "contacts"    },
+  { title: "Faltas",       url: "/faltas",      icon: UserX,           module: "absences"    },
+  { title: "Comunicação",  url: "/comunicacao", icon: MessageSquare,   module: "comunicacao" },
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
-  const location = useLocation();
-  const currentPath = location.pathname;
+  const { state }  = useSidebar();
+  const collapsed  = state === "collapsed";
+  const location   = useLocation();
+  const { canAccess } = useApp();
 
-  const isActive = (path: string) => currentPath === path;
+  // Dashboard is always visible; other items filtered by role
+  const items = ALL_ITEMS.filter(item =>
+    item.module === "dashboard" || canAccess(item.module)
+  );
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <Sidebar collapsible="icon">
@@ -55,17 +50,12 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/70">
-            Menu
-          </SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/70">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {items.map(item => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                  >
+                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
