@@ -6,28 +6,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, CheckCircle, Clock, AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { Plus, CheckCircle, Clock, AlertCircle, Pencil, Trash2, Lock } from "lucide-react";
 import { useApp, Task, TaskStatus } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
-
-const ASSIGNEES = ["Coord. Ana", "Coord. Paula", "Secretaria", "Prof. Carlos"];
-const TURMAS = ["1º Ano A", "1º Ano B", "2º Ano A", "2º Ano B", "3º Ano A", "3º Ano B"];
 
 const STATUS_CYCLE: TaskStatus[] = ["pendente", "em_andamento", "concluida", "atrasada"];
 
 const statusConfig: Record<TaskStatus, { label: string; icon: typeof Clock; className: string }> = {
-  pendente: { label: "Pendente", icon: Clock, className: "bg-yellow-100 text-yellow-700" },
-  em_andamento: { label: "Em andamento", icon: AlertCircle, className: "bg-blue-100 text-blue-700" },
-  concluida: { label: "Concluída", icon: CheckCircle, className: "bg-green-100 text-green-700" },
-  atrasada: { label: "Atrasada", icon: AlertCircle, className: "bg-red-100 text-red-700" },
+  pendente:     { label: "Pendente",     icon: Clock,        className: "bg-yellow-100 text-yellow-700" },
+  em_andamento: { label: "Em andamento", icon: AlertCircle,  className: "bg-blue-100 text-blue-700"   },
+  concluida:    { label: "Concluída",    icon: CheckCircle,  className: "bg-green-100 text-green-700"  },
+  atrasada:     { label: "Atrasada",     icon: AlertCircle,  className: "bg-red-100 text-red-700"      },
 };
 
 type FormData = { title: string; description: string; assignee: string; dueDate: string; status: TaskStatus };
 const emptyForm: FormData = { title: "", description: "", assignee: "", dueDate: "", status: "pendente" };
 
 export default function Tarefas() {
-  const { tasks, addTask, updateTask, deleteTask } = useApp();
+  const { tasks, addTask, updateTask, deleteTask, assignees, canAccess } = useApp();
   const { toast } = useToast();
+  const canEdit = canAccess("tasks");
+
   const [filter, setFilter] = useState<string>("todas");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -40,19 +39,13 @@ export default function Tarefas() {
   const validate = (): boolean => {
     const e: Partial<FormData> = {};
     if (!form.title.trim()) e.title = "Título obrigatório";
-    if (!form.assignee) e.assignee = "Responsável obrigatório";
-    if (!form.dueDate) e.dueDate = "Prazo obrigatório";
+    if (!form.assignee)     e.assignee = "Responsável obrigatório";
+    if (!form.dueDate)      e.dueDate = "Prazo obrigatório";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const openCreate = () => {
-    setEditingTask(null);
-    setForm(emptyForm);
-    setErrors({});
-    setDialogOpen(true);
-  };
-
+  const openCreate = () => { setEditingTask(null); setForm(emptyForm); setErrors({}); setDialogOpen(true); };
   const openEdit = (task: Task) => {
     setEditingTask(task);
     setForm({ title: task.title, description: task.description, assignee: task.assignee, dueDate: task.dueDate, status: task.status });
@@ -60,27 +53,28 @@ export default function Tarefas() {
     setDialogOpen(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
     if (editingTask) {
-      updateTask(editingTask.id, form);
+      await updateTask(editingTask.id, form);
       toast({ title: "Tarefa atualizada" });
     } else {
-      addTask(form);
+      await addTask(form);
       toast({ title: "Tarefa criada" });
     }
     setDialogOpen(false);
   };
 
-  const cycleStatus = (task: Task) => {
+  const cycleStatus = async (task: Task) => {
+    if (!canEdit) return;
     const idx = STATUS_CYCLE.indexOf(task.status);
     const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
-    updateTask(task.id, { status: next });
+    await updateTask(task.id, { status: next });
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteId) return;
-    deleteTask(deleteId);
+    await deleteTask(deleteId);
     setDeleteId(null);
     toast({ title: "Tarefa excluída" });
   };
@@ -92,13 +86,27 @@ export default function Tarefas() {
           <h1 className="text-2xl font-bold">Tarefas & Rotinas</h1>
           <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
         </div>
-        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Nova Tarefa</Button>
+        {canEdit && (
+          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Nova Tarefa</Button>
+        )}
       </div>
+
+      {/* Overdue alert */}
+      {tasks.filter(t => t.status === "atrasada").length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+          <strong>{tasks.filter(t => t.status === "atrasada").length} tarefa(s) atrasada(s)</strong> — prazo já passou e ainda não foram concluídas.
+        </div>
+      )}
 
       <div className="flex gap-2 flex-wrap">
         {(["todas", ...STATUS_CYCLE] as const).map(s => (
           <Button key={s} variant={filter === s ? "default" : "outline"} size="sm" onClick={() => setFilter(s)}>
             {s === "todas" ? "Todas" : statusConfig[s as TaskStatus].label}
+            {s !== "todas" && (
+              <span className="ml-1 text-xs opacity-70">
+                ({tasks.filter(t => t.status === s).length})
+              </span>
+            )}
           </Button>
         ))}
       </div>
@@ -113,9 +121,9 @@ export default function Tarefas() {
             <Card key={task.id} className="hover:shadow-md transition-shadow">
               <CardContent className="flex items-center justify-between p-4">
                 <div
-                  className="flex-1 space-y-1 cursor-pointer"
-                  onClick={() => cycleStatus(task)}
-                  title="Clique para avançar o status"
+                  className={`flex-1 space-y-1 ${canEdit ? "cursor-pointer" : ""}`}
+                  onClick={() => canEdit && cycleStatus(task)}
+                  title={canEdit ? "Clique para avançar o status" : ""}
                 >
                   <p className={`font-medium ${task.status === "concluida" ? "line-through text-muted-foreground" : ""}`}>
                     {task.title}
@@ -125,12 +133,14 @@ export default function Tarefas() {
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <span className={`text-xs px-2 py-1 rounded-full ${config.className}`}>{config.label}</span>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(task)} title="Editar">
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(task.id)} title="Excluir">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {canEdit ? (
+                    <>
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(task)}><Pencil className="h-3.5 w-3.5" /></Button>
+                      <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(task.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </>
+                  ) : (
+                    <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -138,41 +148,26 @@ export default function Tarefas() {
         })}
       </div>
 
-      {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingTask ? "Editar Tarefa" : "Nova Tarefa"}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editingTask ? "Editar Tarefa" : "Nova Tarefa"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <Input
-                placeholder="Título da tarefa *"
-                value={form.title}
-                onChange={e => setForm({ ...form, title: e.target.value })}
-              />
+              <Input placeholder="Título da tarefa *" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
               {errors.title && <p className="text-xs text-destructive mt-1">{errors.title}</p>}
             </div>
-            <Textarea
-              placeholder="Descrição (opcional)"
-              value={form.description}
-              onChange={e => setForm({ ...form, description: e.target.value })}
-            />
+            <Textarea placeholder="Descrição (opcional)" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
             <div>
               <Select value={form.assignee} onValueChange={v => setForm({ ...form, assignee: v })}>
                 <SelectTrigger><SelectValue placeholder="Responsável *" /></SelectTrigger>
                 <SelectContent>
-                  {ASSIGNEES.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  {assignees.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
                 </SelectContent>
               </Select>
               {errors.assignee && <p className="text-xs text-destructive mt-1">{errors.assignee}</p>}
             </div>
             <div>
-              <Input
-                type="date"
-                value={form.dueDate}
-                onChange={e => setForm({ ...form, dueDate: e.target.value })}
-              />
+              <Input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} />
               {errors.dueDate && <p className="text-xs text-destructive mt-1">{errors.dueDate}</p>}
             </div>
             {editingTask && (
@@ -183,14 +178,11 @@ export default function Tarefas() {
                 </SelectContent>
               </Select>
             )}
-            <Button onClick={handleSubmit} className="w-full">
-              {editingTask ? "Salvar Alterações" : "Criar Tarefa"}
-            </Button>
+            <Button onClick={handleSubmit} className="w-full">{editingTask ? "Salvar Alterações" : "Criar Tarefa"}</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

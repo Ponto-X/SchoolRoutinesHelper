@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { TURMAS, canAccess } from "@/lib/constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -63,13 +64,37 @@ export interface AuthUser {
   role: string;
 }
 
-// ─── Auth (static users — swap para Supabase Auth quando necessário) ──────────
+export interface AbsenceSummary {
+  studentName: string;
+  turma: string;
+  total: number;
+  absences: Absence[];
+}
+
+// ─── Auth users ───────────────────────────────────────────────────────────────
 
 const VALID_USERS: Record<string, { password: string; user: AuthUser }> = {
-  "diretora@colegio21.com.br": { password: "admin123", user: { name: "Maria", email: "diretora@colegio21.com.br", role: "Diretora" } },
-  "coord.ana@colegio21.com.br": { password: "admin123", user: { name: "Ana", email: "coord.ana@colegio21.com.br", role: "Coordenadora" } },
-  "secretaria@colegio21.com.br": { password: "admin123", user: { name: "Paula", email: "secretaria@colegio21.com.br", role: "Secretaria" } },
+  "diretora@colegio21.com.br":    { password: "admin123", user: { name: "Maria",  email: "diretora@colegio21.com.br",    role: "Diretora"     } },
+  "coord.ana@colegio21.com.br":   { password: "admin123", user: { name: "Ana",    email: "coord.ana@colegio21.com.br",   role: "Coordenadora" } },
+  "secretaria@colegio21.com.br":  { password: "admin123", user: { name: "Paula",  email: "secretaria@colegio21.com.br",  role: "Secretaria"   } },
+  "prof.carlos@colegio21.com.br": { password: "admin123", user: { name: "Carlos", email: "prof.carlos@colegio21.com.br", role: "Professor"    } },
 };
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function today(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+/** Mark tasks as "atrasada" if dueDate < today and not concluded */
+function applyOverdueStatus(tasks: Task[]): Task[] {
+  const t = today();
+  return tasks.map(task =>
+    task.status !== "concluida" && task.dueDate < t
+      ? { ...task, status: "atrasada" as TaskStatus }
+      : task
+  );
+}
 
 // ─── DB row mappers ───────────────────────────────────────────────────────────
 
@@ -139,6 +164,7 @@ interface AppContextValue {
   user: AuthUser | null;
   login: (email: string, password: string) => boolean;
   logout: () => void;
+  canAccess: (module: string) => boolean;
 
   tasks: Task[];
   loading: boolean;
@@ -147,6 +173,7 @@ interface AppContextValue {
   deleteTask: (id: string) => Promise<void>;
 
   events: Event[];
+  urgentEvents: Event[];   // events in next 3 days
   addEvent: (data: Omit<Event, "id" | "createdAt">) => Promise<void>;
   updateEvent: (id: string, data: Partial<Event>) => Promise<void>;
   deleteEvent: (id: string) => Promise<void>;
@@ -155,11 +182,13 @@ interface AppContextValue {
   deleteChecklistItem: (eventId: string, itemId: string) => Promise<void>;
 
   contacts: Contact[];
+  assignees: string[];     // derived from contacts + fixed staff
   addContact: (data: Omit<Contact, "id" | "createdAt">) => Promise<void>;
   updateContact: (id: string, data: Partial<Contact>) => Promise<void>;
   deleteContact: (id: string) => Promise<void>;
 
   absences: Absence[];
+  absenceSummary: AbsenceSummary[];  // per-student totals
   addAbsence: (data: Omit<Absence, "id" | "createdAt" | "notified">) => Promise<void>;
   updateAbsence: (id: string, data: Partial<Absence>) => Promise<void>;
   deleteAbsence: (id: string) => Promise<void>;
@@ -167,6 +196,7 @@ interface AppContextValue {
 
   messageLogs: MessageLog[];
   sendMessage: (recipient: string, message: string, template: string) => Promise<void>;
+  sendWhatsApp: (phone: string, message: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -186,7 +216,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [messageLogs, setMessageLogs] = useState<MessageLog[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ── Load all data from Supabase ──────────────────────────────────────────
+  // ── Derived state ────────────────────────────────────────────────────────
+
+  // Events in next 3 days
+  const urgentEvents = events.filter(e => {
+    const diff = (new Date(e.date).getTime() - Date.now()) / 86400000;
+    return diff >= 0 && diff <= 3;
+  });
+
+  // Assignees = fixed staff list (could move to DB later)
+  const assignees = ["Coord. Ana", "Coord. Paula", "Secretaria", "Prof. Carlos"];
+
+  // Absence summary per student
+  const absenceSummary: AbsenceSummary[] = Object.values(
+    absences.reduce((acc, a) => {
+      const key = `${a.studentName}__${a.turma}`;
+      if (!acc[key]) acc[key] = { studentName: a.studentName, turma: a.turma, total: 0, absences: [] };
+      acc[key].total += 1;
+      acc[key].absences.push(a);
+      return acc;
+    }, {} as Record<string, AbsenceSummary>)
+  ).sort((a, b) => b.total - a.total);
+
+  // ── Load all data ────────────────────────────────────────────────────────
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -200,12 +252,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         supabase.from("message_logs").select("*").order("sent_at", { ascending: false }),
       ]);
 
-      setTasks((tasksRes.data || []).map(r => mapTask(r as Record<string, unknown>)));
+      const rawTasks = (tasksRes.data || []).map(r => mapTask(r as Record<string, unknown>));
+      setTasks(applyOverdueStatus(rawTasks));
 
-      const allItems = (itemsRes.data || []).map(r => ({ ...mapChecklistItem(r as Record<string, unknown>), eventId: (r as Record<string, unknown>).event_id as string }));
+      const allItems = (itemsRes.data || []).map(r => ({
+        ...mapChecklistItem(r as Record<string, unknown>),
+        eventId: (r as Record<string, unknown>).event_id as string,
+      }));
       setEvents((eventsRes.data || []).map(r => {
         const row = r as Record<string, unknown>;
-        const items = allItems.filter(i => i.eventId === row.id).map(({ ...item }) => item as ChecklistItem);
+        const items = allItems.filter(i => i.eventId === row.id).map(({ eventId: _e, ...item }) => item as ChecklistItem);
         return mapEvent(row, items);
       }));
 
@@ -218,6 +274,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => { loadAll(); }, [loadAll]);
+
+  // Auto-refresh overdue tasks every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTasks(prev => applyOverdueStatus(prev));
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
 
@@ -234,6 +298,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("auth_user");
   }, []);
 
+  const userCanAccess = useCallback((module: string) => canAccess(user?.role, module), [user]);
+
+  // ── WhatsApp (Stevo.chat) ─────────────────────────────────────────────────
+
+  const sendWhatsApp = useCallback(async (phone: string, message: string): Promise<{ ok: boolean; error?: string }> => {
+    const apiKey = import.meta.env.VITE_STEVO_API_KEY;
+    if (!apiKey) return { ok: false, error: "VITE_STEVO_API_KEY não configurada" };
+
+    try {
+      const res = await fetch("https://api.stevo.chat/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
+        body: JSON.stringify({ phone, message }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { ok: false, error: (err as Record<string, unknown>).message as string || `HTTP ${res.status}` };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  }, []);
+
   // ── Tasks ─────────────────────────────────────────────────────────────────
 
   const addTask = useCallback(async (data: Omit<Task, "id" | "createdAt">) => {
@@ -241,7 +329,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       title: data.title, description: data.description,
       assignee: data.assignee, status: data.status, due_date: data.dueDate,
     }).select().single();
-    if (row) setTasks(prev => [mapTask(row as Record<string, unknown>), ...prev]);
+    if (row) setTasks(prev => applyOverdueStatus([mapTask(row as Record<string, unknown>), ...prev]));
   }, []);
 
   const updateTask = useCallback(async (id: string, data: Partial<Task>) => {
@@ -252,7 +340,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (data.status !== undefined) updates.status = data.status;
     if (data.dueDate !== undefined) updates.due_date = data.dueDate;
     await supabase.from("tasks").update(updates).eq("id", id);
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
+    setTasks(prev => applyOverdueStatus(prev.map(t => t.id === id ? { ...t, ...data } : t)));
   }, []);
 
   const deleteTask = useCallback(async (id: string) => {
@@ -264,7 +352,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addEvent = useCallback(async (data: Omit<Event, "id" | "createdAt">) => {
     const { data: row } = await supabase.from("events").insert({ title: data.title, date: data.date }).select().single();
-    if (row) setEvents(prev => [...prev, mapEvent(row as Record<string, unknown>,[])]);
+    if (row) setEvents(prev => [...prev, mapEvent(row as Record<string, unknown>, [])].sort((a, b) => a.date.localeCompare(b.date)));
   }, []);
 
   const updateEvent = useCallback(async (id: string, data: Partial<Event>) => {
@@ -370,12 +458,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      user, login, logout, loading,
+      user, login, logout, canAccess: userCanAccess, loading,
       tasks, addTask, updateTask, deleteTask,
-      events, addEvent, updateEvent, deleteEvent, addChecklistItem, toggleChecklistItem, deleteChecklistItem,
-      contacts, addContact, updateContact, deleteContact,
-      absences, addAbsence, updateAbsence, deleteAbsence, notifyParent,
-      messageLogs, sendMessage,
+      events, urgentEvents, addEvent, updateEvent, deleteEvent,
+      addChecklistItem, toggleChecklistItem, deleteChecklistItem,
+      contacts, assignees, addContact, updateContact, deleteContact,
+      absences, absenceSummary, addAbsence, updateAbsence, deleteAbsence, notifyParent,
+      messageLogs, sendMessage, sendWhatsApp,
     }}>
       {children}
     </AppContext.Provider>
@@ -387,3 +476,5 @@ export function useApp() {
   if (!ctx) throw new Error("useApp must be used inside AppProvider");
   return ctx;
 }
+
+export { TURMAS, canAccess as checkAccess };

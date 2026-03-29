@@ -7,9 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Phone, Search, Pencil, Trash2 } from "lucide-react";
 import { useApp, Contact } from "@/context/AppContext";
+import { TURMAS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
-
-export const TURMAS = ["1º Ano A", "1º Ano B", "2º Ano A", "2º Ano B", "3º Ano A", "3º Ano B"];
 
 const PHONE_REGEX = /^55\d{10,11}$/;
 
@@ -17,8 +16,10 @@ type FormData = { studentName: string; parentName: string; phone: string; turma:
 const emptyForm: FormData = { studentName: "", parentName: "", phone: "", turma: "" };
 
 export default function Contatos() {
-  const { contacts, addContact, updateContact, deleteContact } = useApp();
+  const { contacts, addContact, updateContact, deleteContact, canAccess } = useApp();
   const { toast } = useToast();
+  const canEdit = canAccess("contacts");
+
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
@@ -35,46 +36,35 @@ export default function Contatos() {
   const validate = (): boolean => {
     const e: Partial<FormData> = {};
     if (!form.studentName.trim()) e.studentName = "Nome do aluno obrigatório";
-    if (!form.parentName.trim()) e.parentName = "Nome do responsável obrigatório";
+    if (!form.parentName.trim())  e.parentName = "Nome do responsável obrigatório";
     if (!form.phone.trim()) {
       e.phone = "Telefone obrigatório";
     } else if (!PHONE_REGEX.test(form.phone.trim())) {
-      e.phone = "Formato inválido. Use: 5511999990000 (com DDI 55 + DDD + número)";
+      e.phone = "Formato inválido. Use: 5511999990000 (DDI 55 + DDD + número)";
     }
     if (!form.turma) e.turma = "Turma obrigatória";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const openCreate = () => {
-    setEditingContact(null);
-    setForm(emptyForm);
-    setErrors({});
-    setDialogOpen(true);
-  };
+  const openCreate = () => { setEditingContact(null); setForm(emptyForm); setErrors({}); setDialogOpen(true); };
+  const openEdit = (c: Contact) => { setEditingContact(c); setForm({ studentName: c.studentName, parentName: c.parentName, phone: c.phone, turma: c.turma }); setErrors({}); setDialogOpen(true); };
 
-  const openEdit = (c: Contact) => {
-    setEditingContact(c);
-    setForm({ studentName: c.studentName, parentName: c.parentName, phone: c.phone, turma: c.turma });
-    setErrors({});
-    setDialogOpen(true);
-  };
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
     if (editingContact) {
-      updateContact(editingContact.id, form);
+      await updateContact(editingContact.id, form);
       toast({ title: "Contato atualizado" });
     } else {
-      addContact(form);
+      await addContact(form);
       toast({ title: "Contato adicionado" });
     }
     setDialogOpen(false);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteId) return;
-    deleteContact(deleteId);
+    await deleteContact(deleteId);
     setDeleteId(null);
     toast({ title: "Contato removido" });
   };
@@ -86,22 +76,17 @@ export default function Contatos() {
           <h1 className="text-2xl font-bold">Contatos</h1>
           <p className="text-muted-foreground">Pais e responsáveis dos alunos</p>
         </div>
-        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Novo Contato</Button>
+        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Novo Contato</Button>}
       </div>
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por aluno, responsável ou turma…"
-          className="pl-10"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+        <Input placeholder="Buscar por aluno, responsável ou turma…" className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {filtered.length === 0 && (
         <p className="text-sm text-muted-foreground py-4 text-center">
-          {search ? "Nenhum contato encontrado para esta busca." : "Nenhum contato cadastrado."}
+          {search ? "Nenhum contato encontrado." : "Nenhum contato cadastrado."}
         </p>
       )}
 
@@ -116,15 +101,14 @@ export default function Contatos() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  {contact.phone}
+                  <Phone className="h-4 w-4" />{contact.phone}
                 </div>
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(contact)} title="Editar">
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(contact.id)} title="Excluir">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                {canEdit && (
+                  <>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(contact)}><Pencil className="h-3.5 w-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(contact.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -133,9 +117,7 @@ export default function Contatos() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingContact ? "Editar Contato" : "Novo Contato"}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editingContact ? "Editar Contato" : "Novo Contato"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
               <Input placeholder="Nome do aluno *" value={form.studentName} onChange={e => setForm({ ...form, studentName: e.target.value })} />
@@ -152,15 +134,11 @@ export default function Contatos() {
             <div>
               <Select value={form.turma} onValueChange={v => setForm({ ...form, turma: v })}>
                 <SelectTrigger><SelectValue placeholder="Turma *" /></SelectTrigger>
-                <SelectContent>
-                  {TURMAS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{TURMAS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
               {errors.turma && <p className="text-xs text-destructive mt-1">{errors.turma}</p>}
             </div>
-            <Button onClick={handleSubmit} className="w-full">
-              {editingContact ? "Salvar Alterações" : "Adicionar Contato"}
-            </Button>
+            <Button onClick={handleSubmit} className="w-full">{editingContact ? "Salvar Alterações" : "Adicionar Contato"}</Button>
           </div>
         </DialogContent>
       </Dialog>
