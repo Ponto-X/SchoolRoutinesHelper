@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import { TURMAS, canAccess } from "@/lib/constants";
 
@@ -244,6 +244,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
+      const supabase = await getSupabase();
       const [tasksRes, eventsRes, itemsRes, contactsRes, absencesRes, logsRes] = await Promise.all([
         supabase.from("tasks").select("*").order("created_at", { ascending: false }),
         supabase.from("events").select("*").order("date", { ascending: true }),
@@ -310,6 +311,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ── Tasks ─────────────────────────────────────────────────────────────────
 
   const addTask = useCallback(async (data: Omit<Task, "id" | "createdAt">) => {
+    const supabase = await getSupabase();
     const { data: row } = await supabase.from("tasks").insert({
       title: data.title, description: data.description,
       assignee: data.assignee, status: data.status, due_date: data.dueDate,
@@ -318,6 +320,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateTask = useCallback(async (id: string, data: Partial<Task>) => {
+    const supabase = await getSupabase();
     const updates: Record<string, unknown> = {};
     if (data.title !== undefined) updates.title = data.title;
     if (data.description !== undefined) updates.description = data.description;
@@ -329,6 +332,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteTask = useCallback(async (id: string) => {
+    const supabase = await getSupabase();
     await supabase.from("tasks").delete().eq("id", id);
     setTasks(prev => prev.filter(t => t.id !== id));
   }, []);
@@ -336,11 +340,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ── Events ────────────────────────────────────────────────────────────────
 
   const addEvent = useCallback(async (data: Omit<Event, "id" | "createdAt">) => {
+    const supabase = await getSupabase();
     const { data: row } = await supabase.from("events").insert({ title: data.title, date: data.date }).select().single();
     if (row) setEvents(prev => [...prev, mapEvent(row as Record<string, unknown>, [])].sort((a, b) => a.date.localeCompare(b.date)));
   }, []);
 
   const updateEvent = useCallback(async (id: string, data: Partial<Event>) => {
+    const supabase = await getSupabase();
     const updates: Record<string, unknown> = {};
     if (data.title !== undefined) updates.title = data.title;
     if (data.date !== undefined) updates.date = data.date;
@@ -349,11 +355,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteEvent = useCallback(async (id: string) => {
+    const supabase = await getSupabase();
     await supabase.from("events").delete().eq("id", id);
     setEvents(prev => prev.filter(e => e.id !== id));
   }, []);
 
   const addChecklistItem = useCallback(async (eventId: string, text: string) => {
+    const supabase = await getSupabase();
     const { data: row } = await supabase.from("checklist_items").insert({ event_id: eventId, text, done: false }).select().single();
     if (row) {
       const item = mapChecklistItem(row as Record<string, unknown>);
@@ -362,6 +370,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleChecklistItem = useCallback(async (eventId: string, itemId: string) => {
+    const supabase = await getSupabase();
     const event = events.find(e => e.id === eventId);
     const item = event?.checklist.find(c => c.id === itemId);
     if (!item) return;
@@ -372,6 +381,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [events]);
 
   const deleteChecklistItem = useCallback(async (eventId: string, itemId: string) => {
+    const supabase = await getSupabase();
     await supabase.from("checklist_items").delete().eq("id", itemId);
     setEvents(prev => prev.map(e =>
       e.id === eventId ? { ...e, checklist: e.checklist.filter(c => c.id !== itemId) } : e
@@ -381,6 +391,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ── Contacts ──────────────────────────────────────────────────────────────
 
   const addContact = useCallback(async (data: Omit<Contact, "id" | "createdAt">) => {
+    const supabase = await getSupabase();
     const { data: row } = await supabase.from("contacts").insert({
       student_name: data.studentName, parent_name: data.parentName,
       phone: data.phone, turma: data.turma,
@@ -389,6 +400,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateContact = useCallback(async (id: string, data: Partial<Contact>) => {
+    const supabase = await getSupabase();
     const updates: Record<string, unknown> = {};
     if (data.studentName !== undefined) updates.student_name = data.studentName;
     if (data.parentName !== undefined) updates.parent_name = data.parentName;
@@ -399,6 +411,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteContact = useCallback(async (id: string) => {
+    const supabase = await getSupabase();
     await supabase.from("contacts").delete().eq("id", id);
     setContacts(prev => prev.filter(c => c.id !== id));
   }, []);
@@ -406,6 +419,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ── Absences ──────────────────────────────────────────────────────────────
 
   const addAbsence = useCallback(async (data: Omit<Absence, "id" | "createdAt" | "notified">) => {
+    const supabase = await getSupabase();
     const { data: row } = await supabase.from("absences").insert({
       student_name: data.studentName, turma: data.turma,
       date: data.date, reason: data.reason, notified: false,
@@ -414,6 +428,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateAbsence = useCallback(async (id: string, data: Partial<Absence>) => {
+    const supabase = await getSupabase();
     const updates: Record<string, unknown> = {};
     if (data.studentName !== undefined) updates.student_name = data.studentName;
     if (data.turma !== undefined) updates.turma = data.turma;
@@ -424,11 +439,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteAbsence = useCallback(async (id: string) => {
+    const supabase = await getSupabase();
     await supabase.from("absences").delete().eq("id", id);
     setAbsences(prev => prev.filter(a => a.id !== id));
   }, []);
 
   const notifyParent = useCallback(async (id: string) => {
+    const supabase = await getSupabase();
     const notifiedAt = new Date().toISOString();
     await supabase.from("absences").update({ notified: true, notified_at: notifiedAt }).eq("id", id);
     setAbsences(prev => prev.map(a => a.id === id ? { ...a, notified: true, notifiedAt } : a));
@@ -437,6 +454,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ── Messages ──────────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(async (recipient: string, message: string, template: string) => {
+    const supabase = await getSupabase();
     const { data: row } = await supabase.from("message_logs").insert({ recipient, message, template }).select().single();
     if (row) setMessageLogs(prev => [mapMessageLog(row as Record<string, unknown>), ...prev]);
   }, []);

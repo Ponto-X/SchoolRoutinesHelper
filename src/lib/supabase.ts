@@ -1,15 +1,22 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { getConfig } from "./config";
 
-const supabaseUrl     = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+let _client: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("⚠️  VITE_SUPABASE_URL ou VITE_SUPABASE_ANON_KEY não configurados.");
+export async function getSupabase(): Promise<SupabaseClient> {
+  if (_client) return _client;
+  const cfg = await getConfig();
+  _client = createClient(cfg.VITE_SUPABASE_URL, cfg.VITE_SUPABASE_ANON_KEY);
+  return _client;
 }
 
+// Keep sync export for backwards compat during migration
 export const supabase = createClient(
-  supabaseUrl  || "https://placeholder.supabase.co",
-  supabaseAnonKey || "placeholder"
+  import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co',
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder'
 );
 
-export const isSupabaseConfigured = !!supabaseUrl && !!supabaseAnonKey;
+export const isSupabaseConfigured = !!(
+  import.meta.env.VITE_SUPABASE_URL &&
+  import.meta.env.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co'
+);
