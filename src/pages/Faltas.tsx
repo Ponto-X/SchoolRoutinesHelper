@@ -94,7 +94,7 @@ export default function Faltas() {
     if (phone) {
       const result = await sendWhatsApp(phone, message);
       if (result.ok) {
-        toast({ title: "✅ WhatsApp enviado!", description: `Mensagem enviada para ${parentName || phone}.` });
+        toast({ title: "✅ WhatsApp enviado!", description: `Mensagem ${absence.notified ? "reenviada" : "enviada"} para ${parentName || phone}.` });
       } else {
         toast({ title: "Notificação registrada", description: `Erro ao enviar WhatsApp: ${result.error}`, variant: "destructive" });
       }
@@ -174,7 +174,16 @@ export default function Faltas() {
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {absence.notified ? (
-                      <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">Notificado</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">Notificado</span>
+                        {canEdit && (
+                          <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                            onClick={() => handleNotify(absence)}
+                            title="Reenviar notificação">
+                            <MessageSquare className="h-3.5 w-3.5 mr-1" /> Reenviar
+                          </Button>
+                        )}
+                      </div>
                     ) : (
                       canEdit && (
                         <Button size="sm" variant="outline" onClick={() => handleNotify(absence)}>
