@@ -277,18 +277,18 @@ export default function Turmas() {
       </div>
 
       {/* Resumo */}
-      <div className="grid grid-cols-3 gap-2">
-        <Card><CardContent className="p-3 text-center">
+      <div className="flex gap-3">
+        <Card className="flex-1"><CardContent className="p-3 text-center">
           <p className="text-2xl font-bold">{turmas.filter(t => t.active).length}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Turmas ativas</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Turmas</p>
         </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
+        <Card className="flex-1"><CardContent className="p-3 text-center">
           <p className="text-2xl font-bold">{allStudents.length}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Alunos cadastrados</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Alunos</p>
         </CardContent></Card>
-        <Card><CardContent className="p-3 text-center">
+        <Card className="flex-1"><CardContent className="p-3 text-center">
           <p className="text-2xl font-bold text-orange-600">{allStudents.filter(s => !s.turma).length}</p>
-          <p className="text-xs text-orange-500 mt-0.5 leading-tight">Sem turma</p>
+          <p className="text-xs text-orange-500 mt-0.5">Sem turma</p>
         </CardContent></Card>
       </div>
 
@@ -326,40 +326,31 @@ export default function Turmas() {
                 )}
               </div>
 
-              {/* Stats strip */}
-              <div className="flex border-t divide-x text-sm">
+              {/* Stats strip — compact pill row */}
+              <div className="flex gap-2 px-4 pb-3 border-t pt-2.5">
                 <button
                   onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "student" })}
-                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50/50 transition-colors min-w-0"
+                  className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full px-3 py-1 text-xs transition-colors"
                 >
-                  <GraduationCap className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                  <GraduationCap className="h-3.5 w-3.5" />
                   <span className="font-semibold">{turma.students.length}</span>
-                  <span className="text-muted-foreground truncate">
-                    {turma.students.length === 1 ? "aluno" : "alunos"}
-                    {turma.students.length > 0 && ` · ${turma.students.slice(0,2).map(s => s.name.split(" ")[0]).join(", ")}${turma.students.length > 2 ? "…" : ""}`}
-                  </span>
+                  <span className="hidden sm:inline">{turma.students.length === 1 ? "aluno" : "alunos"}</span>
                 </button>
                 <button
                   onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "professor" })}
-                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-emerald-50/50 transition-colors min-w-0"
+                  className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-full px-3 py-1 text-xs transition-colors"
                 >
-                  <BookOpen className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                  <BookOpen className="h-3.5 w-3.5" />
                   <span className="font-semibold">{turma.professors.length}</span>
-                  <span className="text-muted-foreground truncate">
-                    {turma.professors.length === 1 ? "prof." : "profs."}
-                    {turma.professors.length > 0 && ` · ${turma.professors[0].name.split(" ")[0]}`}
-                  </span>
+                  <span className="hidden sm:inline">{turma.professors.length === 1 ? "prof." : "profs."}</span>
                 </button>
                 <button
                   onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "coordinator" })}
-                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-purple-50/50 transition-colors min-w-0"
+                  className="flex items-center gap-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-full px-3 py-1 text-xs transition-colors"
                 >
-                  <UserCheck className="h-4 w-4 text-purple-500 flex-shrink-0" />
+                  <UserCheck className="h-3.5 w-3.5" />
                   <span className="font-semibold">{turma.coordinators.length}</span>
-                  <span className="text-muted-foreground truncate">
-                    {turma.coordinators.length === 1 ? "coord." : "coords."}
-                    {turma.coordinators.length > 0 && ` · ${turma.coordinators[0].name.split(" ")[0]}`}
-                  </span>
+                  <span className="hidden sm:inline">{turma.coordinators.length === 1 ? "coord." : "coords."}</span>
                 </button>
               </div>
             </CardContent>
