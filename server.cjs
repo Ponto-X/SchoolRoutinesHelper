@@ -24,7 +24,7 @@ const runtimeConfig = {
   VITE_WHATSAPP_PROVIDER:   process.env.VITE_WHATSAPP_PROVIDER || '',
   VITE_EVOLUTION_API_URL:   process.env.VITE_EVOLUTION_API_URL || '',
   VITE_EVOLUTION_API_KEY:   process.env.VITE_EVOLUTION_API_KEY || '',
-  VITE_EVOLUTION_INSTANCE:  process.env.VITE_EVOLUTION_INSTANCE || '',
+  VITE_EVOLUTION_INSTANCE:  (process.env.VITE_EVOLUTION_INSTANCE || '').trim(),
 };
 
 const server = http.createServer((req, res) => {
