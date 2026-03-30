@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,7 @@ import { Send, Clock, Loader2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { TURMAS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
+import { getConfig } from "@/lib/config";
 
 const templates = [
   { id: "falta",   title: "Falta de Aluno",   text: "Olá! Somos do Colégio 21 de Abril. Notamos que seu(a) filho(a) não compareceu à aula hoje. Está tudo bem? Gostaríamos de saber se há algo que possamos ajudar." },
@@ -30,6 +31,13 @@ export default function Comunicacao() {
   const [message, setMessage] = useState("");
   const [recipient, setRecipient] = useState("");
   const [sending, setSending] = useState(false);
+  const [whatsappConfigured, setWhatsappConfigured] = useState(false);
+
+  useEffect(() => {
+    getConfig().then(cfg => {
+      setWhatsappConfigured(!!cfg.VITE_WHATSAPP_PROVIDER && cfg.VITE_WHATSAPP_PROVIDER !== "none");
+    });
+  }, []);
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId);
@@ -50,12 +58,9 @@ export default function Comunicacao() {
     const targets = getTargetContacts();
     setSending(true);
 
-    // Log in DB
     await sendMessage(recipient, message.trim(), selectedTemplate || "manual");
 
-    // Try real WhatsApp for each contact
-    const hasStevo = !!import.meta.env.VITE_STEVO_API_KEY;
-    if (hasStevo && targets.length > 0) {
+    if (whatsappConfigured && targets.length > 0) {
       let sent = 0;
       for (const contact of targets) {
         const result = await sendWhatsApp(contact.phone, message.trim());
@@ -68,9 +73,9 @@ export default function Comunicacao() {
     } else {
       toast({
         title: "Mensagem registrada",
-        description: hasStevo
-          ? `${targets.length} contato(s) — WhatsApp sendo enviado…`
-          : `${targets.length} contato(s). Configure VITE_STEVO_API_KEY para enviar via WhatsApp.`,
+        description: whatsappConfigured
+          ? `${targets.length} contato(s) sem telefone cadastrado.`
+          : `${targets.length} contato(s). WhatsApp não configurado — configure a Evolution API no Railway.`,
       });
     }
 
@@ -90,7 +95,14 @@ export default function Comunicacao() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-lg">Enviar Mensagem</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center justify-between">
+                Enviar Mensagem
+                <span className={`text-xs px-2 py-1 rounded-full ${whatsappConfigured ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                  {whatsappConfigured ? "✅ WhatsApp ativo" : "⚠️ WhatsApp não configurado"}
+                </span>
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
               <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
                 <SelectTrigger><SelectValue placeholder="Escolha um modelo (opcional)" /></SelectTrigger>
@@ -104,7 +116,7 @@ export default function Comunicacao() {
 
               {recipient && (
                 <p className="text-xs text-muted-foreground">
-                  {getTargetContacts().length} contato(s) cadastrado(s) para este destinatário.
+                  {getTargetContacts().length} contato(s) para este destinatário.
                 </p>
               )}
 
@@ -115,9 +127,9 @@ export default function Comunicacao() {
                 {sending ? "Enviando…" : "Enviar via WhatsApp"}
               </Button>
 
-              {!import.meta.env.VITE_STEVO_API_KEY && (
+              {!whatsappConfigured && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Configure VITE_STEVO_API_KEY no Railway para ativar envio real via WhatsApp.
+                  Para ativar o WhatsApp: adicione VITE_WHATSAPP_PROVIDER=evolution e as variáveis da Evolution API no Railway.
                 </p>
               )}
             </CardContent>
