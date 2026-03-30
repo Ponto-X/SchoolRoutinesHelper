@@ -156,9 +156,7 @@ export default function Comunicacao() {
                     {activeTemplates.map(t => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.title}
-                        {extractVars(t.body).length > 0 && (
-                          <span className="text-xs text-muted-foreground ml-2">({extractVars(t.body).length} variáveis)</span>
-                        )}
+  
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -225,14 +223,10 @@ export default function Comunicacao() {
                     className={`w-full text-left p-2.5 rounded-lg border text-sm transition-colors hover:bg-muted ${selectedTemplateId === t.id ? "border-primary bg-primary/5" : "border-border"}`}
                   >
                     <p className="font-medium truncate">{t.title}</p>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">{t.body.slice(0, 55)}…</p>
-                    {extractVars(t.body).length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {extractVars(t.body).map(v => (
-                          <Badge key={v} variant="outline" className="text-xs py-0">{v}</Badge>
-                        ))}
-                      </div>
-                    )}
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {t.body.replace(/\{\{\w+\}\}/g, '___').slice(0, 55)}…
+                    </p>
+
                   </button>
                 ))
               )}
