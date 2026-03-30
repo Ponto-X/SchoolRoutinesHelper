@@ -7,7 +7,7 @@ RUN npm ci
 
 COPY . .
 
-# Declare build args so Railway passes VITE_* vars during build
+# Recebe variáveis de build do Railway
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_WHATSAPP_PROVIDER
@@ -15,7 +15,7 @@ ARG VITE_EVOLUTION_API_URL
 ARG VITE_EVOLUTION_API_KEY
 ARG VITE_EVOLUTION_INSTANCE
 
-# Make them available to Vite at build time
+# Exporta para o processo de build do Vite
 ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
 ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 ENV VITE_WHATSAPP_PROVIDER=$VITE_WHATSAPP_PROVIDER
@@ -26,5 +26,4 @@ ENV VITE_EVOLUTION_INSTANCE=$VITE_EVOLUTION_INSTANCE
 RUN npm run build
 
 EXPOSE 3000
-
 CMD ["node", "server.cjs"]
