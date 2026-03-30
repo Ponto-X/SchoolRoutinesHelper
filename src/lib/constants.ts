@@ -1,6 +1,3 @@
-// Centralized constants — source of truth for the whole app
-// These will move to DB settings table in a future iteration
-
 export const TURMAS = [
   "1º Ano A", "1º Ano B",
   "2º Ano A", "2º Ano B",
@@ -18,12 +15,11 @@ export const ROLES = {
 
 export type Role = keyof typeof ROLES;
 
-// Role permissions
 export const PERMISSIONS: Record<string, string[]> = {
-  Diretora:      ["tasks", "events", "contacts", "absences", "comunicacao", "settings"],
-  Coordenadora:  ["tasks", "events", "contacts", "absences", "comunicacao"],
-  Secretaria:    ["contacts", "absences", "comunicacao"],
-  Professor:     ["tasks", "absences"],
+  Diretora:      ["tasks", "events", "contacts", "absences", "comunicacao", "students", "staff", "settings"],
+  Coordenadora:  ["tasks", "events", "contacts", "absences", "comunicacao", "students", "staff"],
+  Secretaria:    ["contacts", "absences", "comunicacao", "students"],
+  Professor:     ["tasks", "absences", "students"],
 };
 
 export function canAccess(role: string | undefined, module: string): boolean {
