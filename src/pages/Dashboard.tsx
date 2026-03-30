@@ -70,74 +70,68 @@ export default function Dashboard() {
             <button onClick={() => navigate("/tarefas")}
               className="w-full flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 transition-colors text-left">
               <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-              <span><strong>{overdueTasks} tarefa(s) atrasada(s)</strong> — clique para ver</span>
-              <ArrowRight className="h-4 w-4 ml-auto" />
+              <span className="flex-1 min-w-0 truncate"><strong>{overdueTasks} tarefa(s) atrasada(s)</strong> — clique para ver</span>
+              <ArrowRight className="h-4 w-4 flex-shrink-0" />
             </button>
           )}
           {urgentEvents.length > 0 && (
             <button onClick={() => navigate("/eventos")}
               className="w-full flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-800 hover:bg-amber-100 transition-colors text-left">
               <Bell className="h-4 w-4 flex-shrink-0" />
-              <span><strong>{urgentEvents.length} evento(s)</strong> nos próximos 3 dias: {urgentEvents.map(e => e.title).join(", ")}</span>
-              <ArrowRight className="h-4 w-4 ml-auto" />
+              <span className="flex-1 min-w-0 truncate"><strong>{urgentEvents.length} evento(s)</strong> nos próximos 3 dias</span>
+              <ArrowRight className="h-4 w-4 flex-shrink-0" />
             </button>
           )}
           {atRiskStudents.length > 0 && (
             <button onClick={() => navigate("/faltas")}
               className="w-full flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-4 py-2.5 text-sm text-orange-800 hover:bg-orange-100 transition-colors text-left">
               <UserX className="h-4 w-4 flex-shrink-0" />
-              <span><strong>{atRiskStudents.length} aluno(s)</strong> com 3+ faltas: {atRiskStudents.slice(0, 3).map(s => s.studentName).join(", ")}{atRiskStudents.length > 3 ? "…" : ""}</span>
-              <ArrowRight className="h-4 w-4 ml-auto" />
+              <span className="flex-1 min-w-0 truncate"><strong>{atRiskStudents.length} aluno(s)</strong> com 3+ faltas</span>
+              <ArrowRight className="h-4 w-4 flex-shrink-0" />
             </button>
           )}
           {pendingNotify > 0 && (
             <button onClick={() => navigate("/faltas")}
               className="w-full flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 text-sm text-blue-800 hover:bg-blue-100 transition-colors text-left">
               <MessageSquare className="h-4 w-4 flex-shrink-0" />
-              <span><strong>{pendingNotify} falta(s)</strong> aguardando notificação ao responsável</span>
-              <ArrowRight className="h-4 w-4 ml-auto" />
+              <span className="flex-1 min-w-0 truncate"><strong>{pendingNotify} falta(s)</strong> aguardando notificação</span>
+              <ArrowRight className="h-4 w-4 flex-shrink-0" />
             </button>
           )}
         </div>
       )}
 
       {/* Cards de entidade (escola) */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {canAccess("turmas") && (
-          <button onClick={() => navigate("/turmas")} className="text-left">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
+          <button onClick={() => navigate("/turmas")} className="text-left w-full">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+              <CardContent className="p-3 flex flex-col items-center justify-center text-center gap-1.5">
                 <div className="p-2 bg-primary/10 rounded-lg"><School className="h-5 w-5 text-primary" /></div>
-                <div>
-                  <p className="text-2xl font-bold">{counts.turmas}</p>
-                  <p className="text-xs text-muted-foreground">Turmas</p>
-                </div>
+                <p className="text-2xl font-bold leading-none">{counts.turmas}</p>
+                <p className="text-xs text-muted-foreground">Turmas</p>
               </CardContent>
             </Card>
           </button>
         )}
         {canAccess("students") && (
-          <button onClick={() => navigate("/alunos")} className="text-left">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
+          <button onClick={() => navigate("/alunos")} className="text-left w-full">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+              <CardContent className="p-3 flex flex-col items-center justify-center text-center gap-1.5">
                 <div className="p-2 bg-green-100 rounded-lg"><GraduationCap className="h-5 w-5 text-green-700" /></div>
-                <div>
-                  <p className="text-2xl font-bold">{counts.students}</p>
-                  <p className="text-xs text-muted-foreground">Alunos</p>
-                </div>
+                <p className="text-2xl font-bold leading-none">{counts.students}</p>
+                <p className="text-xs text-muted-foreground">Alunos</p>
               </CardContent>
             </Card>
           </button>
         )}
         {canAccess("staff") && (
-          <button onClick={() => navigate("/colaboradores")} className="text-left">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4 flex items-center gap-3">
+          <button onClick={() => navigate("/colaboradores")} className="text-left w-full">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+              <CardContent className="p-3 flex flex-col items-center justify-center text-center gap-1.5">
                 <div className="p-2 bg-purple-100 rounded-lg"><UsersRound className="h-5 w-5 text-purple-700" /></div>
-                <div>
-                  <p className="text-2xl font-bold">{counts.staff}</p>
-                  <p className="text-xs text-muted-foreground">Colaboradores</p>
-                </div>
+                <p className="text-2xl font-bold leading-none">{counts.staff}</p>
+                <p className="text-xs text-muted-foreground">Colab.</p>
               </CardContent>
             </Card>
           </button>
@@ -145,53 +139,53 @@ export default function Dashboard() {
       </div>
 
       {/* Stats operacionais */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <button onClick={() => navigate("/tarefas")} className="text-left">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Tarefas Pendentes</CardTitle>
-              <CheckSquare className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
+      <div className="grid grid-cols-2 gap-3">
+        <button onClick={() => navigate("/tarefas")} className="text-left w-full">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground leading-tight">Tarefas{"\n"}Pendentes</p>
+                <CheckSquare className="h-4 w-4 text-primary flex-shrink-0" />
+              </div>
               <p className="text-3xl font-bold">{pendingTasks}</p>
               {overdueTasks > 0 && <p className="text-xs text-red-600 mt-1">{overdueTasks} atrasada(s)</p>}
             </CardContent>
           </Card>
         </button>
 
-        <button onClick={() => navigate("/eventos")} className="text-left">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Eventos (7 dias)</CardTitle>
-              <Calendar className="h-4 w-4 text-amber-600" />
-            </CardHeader>
-            <CardContent>
+        <button onClick={() => navigate("/eventos")} className="text-left w-full">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">Eventos (7 dias)</p>
+                <Calendar className="h-4 w-4 text-amber-600 flex-shrink-0" />
+              </div>
               <p className="text-3xl font-bold">{weekEvents}</p>
               <p className="text-xs text-muted-foreground mt-1">{upcomingEvents.length} total futuros</p>
             </CardContent>
           </Card>
         </button>
 
-        <button onClick={() => navigate("/faltas")} className="text-left">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Faltas Hoje</CardTitle>
-              <UserX className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
+        <button onClick={() => navigate("/faltas")} className="text-left w-full">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">Faltas Hoje</p>
+                <UserX className="h-4 w-4 text-destructive flex-shrink-0" />
+              </div>
               <p className="text-3xl font-bold">{todayAbsences}</p>
               <p className="text-xs text-muted-foreground mt-1">{monthAbsences} no mês</p>
             </CardContent>
           </Card>
         </button>
 
-        <button onClick={() => navigate("/comunicacao")} className="text-left">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Mensagens (mês)</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
+        <button onClick={() => navigate("/comunicacao")} className="text-left w-full">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">Mensagens (mês)</p>
+                <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              </div>
               <p className="text-3xl font-bold">{monthMessages}</p>
               <p className="text-xs text-muted-foreground mt-1">{messageLogs.length} total</p>
             </CardContent>
@@ -214,12 +208,12 @@ export default function Dashboard() {
             ) : (
               <ul className="space-y-2">
                 {recentTasks.map(task => (
-                  <li key={task.id} className="flex items-center justify-between p-2.5 bg-muted rounded-md">
-                    <div>
-                      <p className="text-sm font-medium">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{task.assignee} • {task.dueDate}</p>
+                  <li key={task.id} className="flex items-start justify-between gap-2 p-2.5 bg-muted rounded-md">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{task.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{task.assignee} • {task.dueDate}</p>
                     </div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor[task.status]}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${statusColor[task.status]}`}>
                       {statusLabel[task.status]}
                     </span>
                   </li>
