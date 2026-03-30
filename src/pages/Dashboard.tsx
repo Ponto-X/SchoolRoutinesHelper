@@ -1,90 +1,226 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckSquare, Calendar, UserX, MessageSquare, Bell, AlertTriangle } from "lucide-react";
+import { CheckSquare, Calendar, UserX, MessageSquare, Bell, AlertTriangle, GraduationCap, UsersRound, School, ArrowRight } from "lucide-react";
 import { useApp } from "@/context/AppContext";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { getSupabase } from "@/lib/supabase";
 
 export default function Dashboard() {
-  const { tasks, events, absences, messageLogs, urgentEvents, absenceSummary, user } = useApp();
+  const { tasks, events, absences, messageLogs, urgentEvents, absenceSummary, user, canAccess } = useApp();
+  const navigate = useNavigate();
 
   const today = new Date().toISOString().split("T")[0];
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
   const endOfWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
 
-  const pendingTasks  = useMemo(() => tasks.filter(t => t.status !== "concluida").length, [tasks]);
-  const overdueTasks  = useMemo(() => tasks.filter(t => t.status === "atrasada").length, [tasks]);
-  const weekEvents    = useMemo(() => events.filter(e => e.date >= today && e.date <= endOfWeek).length, [events, today, endOfWeek]);
-  const todayAbsences = useMemo(() => absences.filter(a => a.date === today).length, [absences, today]);
-  const atRiskStudents = useMemo(() => absenceSummary.filter(s => s.total >= 3).length, [absenceSummary]);
+  // DB counts
+  const [counts, setCounts] = useState({ students: 0, staff: 0, turmas: 0 });
+  const loadCounts = useCallback(async () => {
+    const sb = await getSupabase();
+    const [s, st, t] = await Promise.all([
+      sb.from("students").select("id", { count: "exact", head: true }).eq("active", true),
+      sb.from("staff").select("id", { count: "exact", head: true }).eq("active", true),
+      sb.from("turmas").select("id", { count: "exact", head: true }).eq("active", true),
+    ]);
+    setCounts({ students: s.count || 0, staff: st.count || 0, turmas: t.count || 0 });
+  }, []);
+  useEffect(() => { loadCounts(); }, [loadCounts]);
 
-  const stats = [
-    { title: "Tarefas Pendentes", value: pendingTasks, icon: CheckSquare, color: "text-primary"          },
-    { title: "Eventos esta Semana", value: weekEvents, icon: Calendar,    color: "text-secondary"         },
-    { title: "Faltas Hoje",        value: todayAbsences, icon: UserX,     color: "text-destructive"       },
-    { title: "Mensagens Enviadas", value: messageLogs.length, icon: MessageSquare, color: "text-muted-foreground" },
-  ];
+  // Derived stats — corrigidos
+  const pendingTasks    = useMemo(() => tasks.filter(t => t.status !== "concluida").length, [tasks]);
+  const overdueTasks    = useMemo(() => tasks.filter(t => t.status === "atrasada").length, [tasks]);
+  const upcomingEvents  = useMemo(() => events.filter(e => e.date >= today).sort((a, b) => a.date.localeCompare(b.date)), [events, today]);
+  const weekEvents      = useMemo(() => upcomingEvents.filter(e => e.date <= endOfWeek).length, [upcomingEvents, endOfWeek]);
+  const todayAbsences   = useMemo(() => absences.filter(a => a.date === today).length, [absences, today]);
+  const monthAbsences   = useMemo(() => absences.filter(a => a.date >= startOfMonth).length, [absences, startOfMonth]);
+  const pendingNotify   = useMemo(() => absences.filter(a => !a.notified).length, [absences]);
+  const monthMessages   = useMemo(() => messageLogs.filter(m => m.sentAt >= startOfMonth).length, [messageLogs, startOfMonth]);
+  const atRiskStudents  = useMemo(() => absenceSummary.filter(s => s.total >= 3), [absenceSummary]);
+  const recentTasks     = useMemo(() => tasks.filter(t => t.status !== "concluida").sort((a, b) => {
+    // Atrasadas primeiro, depois por data
+    if (a.status === "atrasada" && b.status !== "atrasada") return -1;
+    if (b.status === "atrasada" && a.status !== "atrasada") return 1;
+    return a.dueDate.localeCompare(b.dueDate);
+  }).slice(0, 5), [tasks]);
 
-  const recentTasks   = useMemo(() => tasks.filter(t => t.status !== "concluida").slice(0, 3), [tasks]);
-  const upcomingEvents = useMemo(() => [...events].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3), [events]);
+  const statusLabel: Record<string, string> = {
+    atrasada: "Atrasada", em_andamento: "Em andamento", pendente: "Pendente", concluida: "Concluída",
+  };
+  const statusColor: Record<string, string> = {
+    atrasada: "bg-red-100 text-red-700",
+    em_andamento: "bg-blue-100 text-blue-700",
+    pendente: "bg-yellow-100 text-yellow-700",
+    concluida: "bg-green-100 text-green-700",
+  };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Olá, {user?.name} ({user?.role}) — Colégio 21 de Abril</p>
+        <p className="text-muted-foreground">
+          Olá, <strong>{user?.name}</strong> — {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+        </p>
       </div>
 
-      {/* Alerts */}
-      <div className="space-y-2">
-        {overdueTasks > 0 && (
-          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-red-700">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            <span><strong>{overdueTasks} tarefa(s) atrasada(s)</strong> — prazo vencido e ainda não concluídas.</span>
-          </div>
+      {/* Alertas */}
+      {(overdueTasks > 0 || urgentEvents.length > 0 || atRiskStudents.length > 0 || pendingNotify > 0) && (
+        <div className="space-y-2">
+          {overdueTasks > 0 && (
+            <button onClick={() => navigate("/tarefas")}
+              className="w-full flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-sm text-red-700 hover:bg-red-100 transition-colors text-left">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+              <span><strong>{overdueTasks} tarefa(s) atrasada(s)</strong> — clique para ver</span>
+              <ArrowRight className="h-4 w-4 ml-auto" />
+            </button>
+          )}
+          {urgentEvents.length > 0 && (
+            <button onClick={() => navigate("/eventos")}
+              className="w-full flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-800 hover:bg-amber-100 transition-colors text-left">
+              <Bell className="h-4 w-4 flex-shrink-0" />
+              <span><strong>{urgentEvents.length} evento(s)</strong> nos próximos 3 dias: {urgentEvents.map(e => e.title).join(", ")}</span>
+              <ArrowRight className="h-4 w-4 ml-auto" />
+            </button>
+          )}
+          {atRiskStudents.length > 0 && (
+            <button onClick={() => navigate("/faltas")}
+              className="w-full flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-4 py-2.5 text-sm text-orange-800 hover:bg-orange-100 transition-colors text-left">
+              <UserX className="h-4 w-4 flex-shrink-0" />
+              <span><strong>{atRiskStudents.length} aluno(s)</strong> com 3+ faltas: {atRiskStudents.slice(0, 3).map(s => s.studentName).join(", ")}{atRiskStudents.length > 3 ? "…" : ""}</span>
+              <ArrowRight className="h-4 w-4 ml-auto" />
+            </button>
+          )}
+          {pendingNotify > 0 && (
+            <button onClick={() => navigate("/faltas")}
+              className="w-full flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 text-sm text-blue-800 hover:bg-blue-100 transition-colors text-left">
+              <MessageSquare className="h-4 w-4 flex-shrink-0" />
+              <span><strong>{pendingNotify} falta(s)</strong> aguardando notificação ao responsável</span>
+              <ArrowRight className="h-4 w-4 ml-auto" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Cards de entidade (escola) */}
+      <div className="grid grid-cols-3 gap-4">
+        {canAccess("turmas") && (
+          <button onClick={() => navigate("/turmas")} className="text-left">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg"><School className="h-5 w-5 text-primary" /></div>
+                <div>
+                  <p className="text-2xl font-bold">{counts.turmas}</p>
+                  <p className="text-xs text-muted-foreground">Turmas</p>
+                </div>
+              </CardContent>
+            </Card>
+          </button>
         )}
-        {urgentEvents.length > 0 && (
-          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-800">
-            <Bell className="h-4 w-4 flex-shrink-0" />
-            <span><strong>{urgentEvents.length} evento(s)</strong> nos próximos 3 dias: {urgentEvents.map(e => e.title).join(", ")}.</span>
-          </div>
+        {canAccess("students") && (
+          <button onClick={() => navigate("/alunos")} className="text-left">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg"><GraduationCap className="h-5 w-5 text-green-700" /></div>
+                <div>
+                  <p className="text-2xl font-bold">{counts.students}</p>
+                  <p className="text-xs text-muted-foreground">Alunos</p>
+                </div>
+              </CardContent>
+            </Card>
+          </button>
         )}
-        {atRiskStudents > 0 && (
-          <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg px-4 py-2.5 text-sm text-orange-800">
-            <UserX className="h-4 w-4 flex-shrink-0" />
-            <span><strong>{atRiskStudents} aluno(s)</strong> com 3+ faltas — risco de reprovação por frequência.</span>
-          </div>
+        {canAccess("staff") && (
+          <button onClick={() => navigate("/colaboradores")} className="text-left">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-lg"><UsersRound className="h-5 w-5 text-purple-700" /></div>
+                <div>
+                  <p className="text-2xl font-bold">{counts.staff}</p>
+                  <p className="text-xs text-muted-foreground">Colaboradores</p>
+                </div>
+              </CardContent>
+            </Card>
+          </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(stat => (
-          <Card key={stat.title}>
+      {/* Stats operacionais */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <button onClick={() => navigate("/tarefas")} className="text-left">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              <CardTitle className="text-sm font-medium text-muted-foreground">Tarefas Pendentes</CardTitle>
+              <CheckSquare className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{stat.value}</div>
+              <p className="text-3xl font-bold">{pendingTasks}</p>
+              {overdueTasks > 0 && <p className="text-xs text-red-600 mt-1">{overdueTasks} atrasada(s)</p>}
             </CardContent>
           </Card>
-        ))}
+        </button>
+
+        <button onClick={() => navigate("/eventos")} className="text-left">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Eventos (7 dias)</CardTitle>
+              <Calendar className="h-4 w-4 text-amber-600" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{weekEvents}</p>
+              <p className="text-xs text-muted-foreground mt-1">{upcomingEvents.length} total futuros</p>
+            </CardContent>
+          </Card>
+        </button>
+
+        <button onClick={() => navigate("/faltas")} className="text-left">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Faltas Hoje</CardTitle>
+              <UserX className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{todayAbsences}</p>
+              <p className="text-xs text-muted-foreground mt-1">{monthAbsences} no mês</p>
+            </CardContent>
+          </Card>
+        </button>
+
+        <button onClick={() => navigate("/comunicacao")} className="text-left">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Mensagens (mês)</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{monthMessages}</p>
+              <p className="text-xs text-muted-foreground mt-1">{messageLogs.length} total</p>
+            </CardContent>
+          </Card>
+        </button>
       </div>
 
+      {/* Tarefas + Eventos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader><CardTitle className="text-lg">Tarefas Pendentes</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg">Tarefas Prioritárias</CardTitle>
+            <button onClick={() => navigate("/tarefas")} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+              Ver todas <ArrowRight className="h-3 w-3" />
+            </button>
+          </CardHeader>
           <CardContent>
             {recentTasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nenhuma tarefa pendente 🎉</p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="space-y-2">
                 {recentTasks.map(task => (
-                  <li key={task.id} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                    <span className="text-sm">{task.title}</span>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      task.status === "atrasada"     ? "bg-red-100 text-red-700"    :
-                      task.status === "em_andamento" ? "bg-blue-100 text-blue-700"  :
-                                                       "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      {task.status === "em_andamento" ? "Em andamento" : task.status === "atrasada" ? "Atrasada" : "Pendente"}
+                  <li key={task.id} className="flex items-center justify-between p-2.5 bg-muted rounded-md">
+                    <div>
+                      <p className="text-sm font-medium">{task.title}</p>
+                      <p className="text-xs text-muted-foreground">{task.assignee} • {task.dueDate}</p>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor[task.status]}`}>
+                      {statusLabel[task.status]}
                     </span>
                   </li>
                 ))}
@@ -94,24 +230,38 @@ export default function Dashboard() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-lg">Próximos Eventos</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg">Próximos Eventos</CardTitle>
+            <button onClick={() => navigate("/eventos")} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+              Ver todos <ArrowRight className="h-3 w-3" />
+            </button>
+          </CardHeader>
           <CardContent>
             {upcomingEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum evento cadastrado.</p>
+              <p className="text-sm text-muted-foreground">Nenhum evento futuro.</p>
             ) : (
-              <ul className="space-y-3">
-                {upcomingEvents.map(event => {
-                  const done = event.checklist.filter(c => c.done).length;
+              <ul className="space-y-2">
+                {upcomingEvents.slice(0, 5).map(event => {
+                  const done  = event.checklist.filter(c => c.done).length;
                   const total = event.checklist.length;
-                  const days = Math.round((new Date(event.date).getTime() - Date.now()) / 86400000);
+                  const days  = Math.round((new Date(event.date).getTime() - Date.now()) / 86400000);
+                  const pct   = total > 0 ? Math.round((done / total) * 100) : null;
                   return (
-                    <li key={event.id} className={`flex items-center justify-between p-3 rounded-md ${days <= 3 && days >= 0 ? "bg-amber-50" : "bg-muted"}`}>
-                      <span className="text-sm">{event.title}</span>
-                      <div className="text-right">
-                        <div className="text-sm text-muted-foreground">{event.date}</div>
-                        {total > 0 && <div className="text-xs text-muted-foreground">{done}/{total} itens</div>}
-                        {days >= 0 && days <= 3 && <div className="text-xs text-amber-700 font-medium">{days === 0 ? "Hoje!" : `${days}d`}</div>}
+                    <li key={event.id} className={`p-2.5 rounded-md ${days <= 3 ? "bg-amber-50" : "bg-muted"}`}>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium">{event.title}</p>
+                        <span className={`text-xs font-medium ${days <= 3 ? "text-amber-700" : "text-muted-foreground"}`}>
+                          {days === 0 ? "Hoje!" : days === 1 ? "Amanhã" : `${days}d`}
+                        </span>
                       </div>
+                      {pct !== null && (
+                        <div className="mt-1.5">
+                          <div className="w-full bg-background rounded-full h-1.5">
+                            <div className="bg-primary rounded-full h-1.5 transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-0.5">{done}/{total} itens do checklist</p>
+                        </div>
+                      )}
                     </li>
                   );
                 })}
@@ -120,7 +270,30 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Faltas sem notificação */}
+      {pendingNotify > 0 && canAccess("absences") && (
+        <Card className="border-blue-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-lg">Aguardando Notificação</CardTitle>
+            <button onClick={() => navigate("/faltas")} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+              Ir para Faltas <ArrowRight className="h-3 w-3" />
+            </button>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {absences.filter(a => !a.notified).slice(0, 10).map(a => (
+                <span key={a.id} className="bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded-full">
+                  {a.studentName} • {a.date}
+                </span>
+              ))}
+              {pendingNotify > 10 && (
+                <span className="text-xs text-muted-foreground self-center">+{pendingNotify - 10} mais</span>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
-// Dashboard already complete - no changes needed for now

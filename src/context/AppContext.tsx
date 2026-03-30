@@ -183,7 +183,7 @@ interface AppContextValue {
   deleteChecklistItem: (eventId: string, itemId: string) => Promise<void>;
 
   contacts: Contact[];
-  assignees: string[];     // derived from contacts + fixed staff
+  assignees: string[];     // loaded from staff table
   addContact: (data: Omit<Contact, "id" | "createdAt">) => Promise<void>;
   updateContact: (id: string, data: Partial<Contact>) => Promise<void>;
   deleteContact: (id: string) => Promise<void>;
@@ -225,8 +225,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return diff >= 0 && diff <= 3;
   });
 
-  // Assignees = fixed staff list (could move to DB later)
-  const assignees = ["Coord. Ana", "Coord. Paula", "Secretaria", "Prof. Carlos"];
+  // assignees is now loaded dynamically in Tarefas from staff table
+  const assignees: string[] = [];
 
   // Absence summary per student
   const absenceSummary: AbsenceSummary[] = Object.values(
