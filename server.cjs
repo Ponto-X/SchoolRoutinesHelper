@@ -57,6 +57,10 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('--- Runtime Config ---');
   console.log('Supabase URL:', runtimeConfig.VITE_SUPABASE_URL ? '✅ set' : '❌ missing');
-  console.log('WhatsApp provider:', runtimeConfig.VITE_WHATSAPP_PROVIDER || 'not set');
+  console.log('WhatsApp provider:', runtimeConfig.VITE_WHATSAPP_PROVIDER || '❌ not set');
+  console.log('Evolution URL:', runtimeConfig.VITE_EVOLUTION_API_URL || '❌ not set');
+  console.log('Evolution Instance:', runtimeConfig.VITE_EVOLUTION_INSTANCE || '❌ not set');
+  console.log('---------------------');
 });
