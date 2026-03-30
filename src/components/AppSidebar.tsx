@@ -1,6 +1,6 @@
 import {
-  LayoutDashboard, CheckSquare, Calendar,
-  MessageSquare, UserX, Users, GraduationCap, UsersRound,
+  LayoutDashboard, CheckSquare, Calendar, MessageSquare,
+  UserX, Users, GraduationCap, UsersRound, School,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -13,27 +13,26 @@ import logoImg from "@/assets/logo-colegio.png";
 import { useApp } from "@/context/AppContext";
 
 const ALL_ITEMS = [
-  { title: "Dashboard",      url: "/",              icon: LayoutDashboard, module: "dashboard"   },
-  { title: "Alunos",         url: "/alunos",         icon: GraduationCap,   module: "students"    },
-  { title: "Colaboradores",  url: "/colaboradores",  icon: UsersRound,      module: "staff"       },
-  { title: "Tarefas",        url: "/tarefas",        icon: CheckSquare,     module: "tasks"       },
-  { title: "Eventos",        url: "/eventos",        icon: Calendar,        module: "events"      },
-  { title: "Contatos",       url: "/contatos",       icon: Users,           module: "contacts"    },
-  { title: "Faltas",         url: "/faltas",         icon: UserX,           module: "absences"    },
-  { title: "Comunicação",    url: "/comunicacao",    icon: MessageSquare,   module: "comunicacao" },
+  { title: "Dashboard",     url: "/",             icon: LayoutDashboard, module: "dashboard"  },
+  { title: "Turmas",        url: "/turmas",        icon: School,          module: "turmas"     },
+  { title: "Alunos",        url: "/alunos",        icon: GraduationCap,   module: "students"   },
+  { title: "Colaboradores", url: "/colaboradores", icon: UsersRound,      module: "staff"      },
+  { title: "Tarefas",       url: "/tarefas",       icon: CheckSquare,     module: "tasks"      },
+  { title: "Eventos",       url: "/eventos",       icon: Calendar,        module: "events"     },
+  { title: "Contatos",      url: "/contatos",      icon: Users,           module: "contacts"   },
+  { title: "Faltas",        url: "/faltas",        icon: UserX,           module: "absences"   },
+  { title: "Comunicação",   url: "/comunicacao",   icon: MessageSquare,   module: "comunicacao"},
 ];
 
 export function AppSidebar() {
-  const { state }  = useSidebar();
-  const collapsed  = state === "collapsed";
-  const location   = useLocation();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const location = useLocation();
   const { canAccess } = useApp();
 
   const items = ALL_ITEMS.filter(item =>
     item.module === "dashboard" || canAccess(item.module)
   );
-
-  const isActive = (path: string) => location.pathname === path;
 
   return (
     <Sidebar collapsible="icon">
@@ -52,7 +51,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map(item => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
+                  <SidebarMenuButton asChild isActive={location.pathname === item.url}>
                     <NavLink to={item.url} end={item.url === "/"} className="hover:bg-sidebar-accent/50"
                       activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium">
                       <item.icon className="mr-2 h-4 w-4" />

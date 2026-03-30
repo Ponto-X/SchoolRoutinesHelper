@@ -1,10 +1,13 @@
-export const TURMAS = [
+// Static fallback — runtime turmas come from DB (tabela turmas)
+export const TURMAS_FALLBACK = [
   "1º Ano A", "1º Ano B",
   "2º Ano A", "2º Ano B",
   "3º Ano A", "3º Ano B",
 ] as const;
 
-export type Turma = typeof TURMAS[number];
+export const TURMAS = TURMAS_FALLBACK; // kept for backward compat
+
+export type Turma = string;
 
 export const ROLES = {
   diretora: "Diretora",
@@ -16,8 +19,8 @@ export const ROLES = {
 export type Role = keyof typeof ROLES;
 
 export const PERMISSIONS: Record<string, string[]> = {
-  Diretora:      ["tasks", "events", "contacts", "absences", "comunicacao", "students", "staff", "settings"],
-  Coordenadora:  ["tasks", "events", "contacts", "absences", "comunicacao", "students", "staff"],
+  Diretora:      ["tasks", "events", "contacts", "absences", "comunicacao", "students", "staff", "turmas", "settings"],
+  Coordenadora:  ["tasks", "events", "contacts", "absences", "comunicacao", "students", "staff", "turmas"],
   Secretaria:    ["contacts", "absences", "comunicacao", "students"],
   Professor:     ["tasks", "absences", "students"],
 };

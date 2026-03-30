@@ -8,13 +8,14 @@ import PrivateRoute from "@/components/PrivateRoute";
 import AppLayout from "@/components/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Alunos from "./pages/Alunos";
+import Colaboradores from "./pages/Colaboradores";
+import Turmas from "./pages/Turmas";
 import Tarefas from "./pages/Tarefas";
 import Eventos from "./pages/Eventos";
 import Contatos from "./pages/Contatos";
 import Faltas from "./pages/Faltas";
 import Comunicacao from "./pages/Comunicacao";
-import Alunos from "./pages/Alunos";
-import Colaboradores from "./pages/Colaboradores";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ export default function App() {
               <Route element={<PrivateRoute />}>
                 <Route element={<AppLayout />}>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="/turmas" element={<Turmas />} />
                   <Route path="/alunos" element={<Alunos />} />
                   <Route path="/colaboradores" element={<Colaboradores />} />
                   <Route path="/tarefas" element={<Tarefas />} />
