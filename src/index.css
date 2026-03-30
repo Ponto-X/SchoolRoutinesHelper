@@ -36,13 +36,13 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 358 82% 50%;
+    --sidebar-background: 358 60% 36%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 358 82% 50%;
-    --sidebar-accent: 358 82% 42%;
+    --sidebar-accent: 358 60% 28%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 358 82% 42%;
+    --sidebar-border: 358 60% 28%;
     --sidebar-ring: 47 92% 53%;
   }
 
