@@ -330,9 +330,9 @@ export default function Turmas() {
               <div className="flex border-t divide-x text-sm">
                 <button
                   onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "student" })}
-                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors min-w-0"
+                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-blue-50/50 transition-colors min-w-0"
                 >
-                  <GraduationCap className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <GraduationCap className="h-4 w-4 text-blue-500 flex-shrink-0" />
                   <span className="font-semibold">{turma.students.length}</span>
                   <span className="text-muted-foreground truncate">
                     {turma.students.length === 1 ? "aluno" : "alunos"}
@@ -341,9 +341,9 @@ export default function Turmas() {
                 </button>
                 <button
                   onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "professor" })}
-                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors min-w-0"
+                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-emerald-50/50 transition-colors min-w-0"
                 >
-                  <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <BookOpen className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                   <span className="font-semibold">{turma.professors.length}</span>
                   <span className="text-muted-foreground truncate">
                     {turma.professors.length === 1 ? "prof." : "profs."}
@@ -352,9 +352,9 @@ export default function Turmas() {
                 </button>
                 <button
                   onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "coordinator" })}
-                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors min-w-0"
+                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-purple-50/50 transition-colors min-w-0"
                 >
-                  <UserCheck className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <UserCheck className="h-4 w-4 text-purple-500 flex-shrink-0" />
                   <span className="font-semibold">{turma.coordinators.length}</span>
                   <span className="text-muted-foreground truncate">
                     {turma.coordinators.length === 1 ? "coord." : "coords."}

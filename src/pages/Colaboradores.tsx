@@ -32,10 +32,17 @@ type FormData = {
 const emptyForm: FormData = { name: "", role: "", email: "", phone: "", turmas: [], active: true };
 
 const ROLE_COLORS: Record<string, string> = {
-  Diretora:     "bg-purple-100 text-purple-700",
-  Coordenadora: "bg-blue-100 text-blue-700",
-  Secretaria:   "bg-green-100 text-green-700",
-  Professor:    "bg-orange-100 text-orange-700",
+  Diretora:     "bg-purple-100 text-purple-700 border-purple-200",
+  Coordenadora: "bg-blue-100 text-blue-700 border-blue-200",
+  Secretaria:   "bg-emerald-100 text-emerald-700 border-emerald-200",
+  Professor:    "bg-orange-100 text-orange-700 border-orange-200",
+};
+
+const ROLE_ICON_COLORS: Record<string, string> = {
+  Diretora:     "text-purple-500",
+  Coordenadora: "text-blue-500",
+  Secretaria:   "text-emerald-500",
+  Professor:    "text-orange-500",
 };
 
 function mapStaff(r: Record<string, unknown>): Staff {
@@ -196,8 +203,8 @@ export default function Colaboradores() {
                   {!member.active && <Badge variant="outline" className="text-xs">Inativo</Badge>}
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                  {member.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{member.phone}</span>}
-                  {member.email && <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{member.email}</span>}
+                  {member.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-green-500" />{member.phone}</span>}
+                  {member.email && <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5 text-blue-400" />{member.email}</span>}
                 </div>
                 {member.turmas.length > 0 && (
                   <div className="flex gap-1 flex-wrap mt-1">

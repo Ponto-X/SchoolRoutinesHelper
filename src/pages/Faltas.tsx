@@ -123,7 +123,7 @@ export default function Faltas() {
       {atRisk.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
           <div className="flex items-center gap-2 font-medium mb-1">
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle className="h-4 w-4 text-red-500" />
             {atRisk.length} aluno(s) com {RISK_THRESHOLD}+ faltas — risco de reprovação
           </div>
           <div className="flex flex-wrap gap-2 mt-1">
@@ -187,7 +187,7 @@ export default function Faltas() {
                     ) : (
                       canEdit && (
                         <Button size="sm" variant="outline" onClick={() => handleNotify(absence)}>
-                          <MessageSquare className="h-4 w-4 mr-1" /> Notificar
+                          <MessageSquare className="h-4 w-4 mr-1 text-blue-500" /> Notificar
                         </Button>
                       )
                     )}

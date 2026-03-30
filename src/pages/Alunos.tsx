@@ -202,7 +202,7 @@ export default function Alunos() {
                   <span className="flex items-center gap-1"><GraduationCap className="h-3.5 w-3.5" />{student.turma}</span>
                   {student.parentName && <span>Resp: {student.parentName}</span>}
                   {student.parentPhone && (
-                    <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{student.parentPhone}</span>
+                    <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-green-500" />{student.parentPhone}</span>
                   )}
                   {student.birthDate && <span>Nasc: {student.birthDate}</span>}
                 </div>
