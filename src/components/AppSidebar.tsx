@@ -29,7 +29,7 @@ const GROUPS = [
   { key: "comunic", label: "Comunicação"   },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const location  = useLocation();
   const { canAccess } = useApp();
   const [collapsed, setCollapsed] = useState(false);
@@ -112,6 +112,7 @@ export function AppSidebar() {
                       <Link
                         to={item.url}
                         title={collapsed ? item.title : undefined}
+                        onClick={onNavigate}
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-all duration-150",
                           active
