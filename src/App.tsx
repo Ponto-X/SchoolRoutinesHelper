@@ -16,6 +16,7 @@ import Eventos from "./pages/Eventos";
 import Contatos from "./pages/Contatos";
 import Faltas from "./pages/Faltas";
 import Comunicacao from "./pages/Comunicacao";
+import Modelos from "./pages/Modelos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,7 @@ export default function App() {
                   <Route path="/contatos" element={<Contatos />} />
                   <Route path="/faltas" element={<Faltas />} />
                   <Route path="/comunicacao" element={<Comunicacao />} />
+                  <Route path="/modelos" element={<Modelos />} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFound />} />

@@ -59,6 +59,16 @@ export interface MessageLog {
   sentAt: string;
 }
 
+export interface MessageTemplate {
+  id: string;
+  title: string;
+  body: string;
+  category: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AuthUser {
   name: string;
   email: string;
@@ -159,6 +169,18 @@ function mapMessageLog(row: Record<string, unknown>): MessageLog {
   };
 }
 
+function mapTemplate(row: Record<string, unknown>): MessageTemplate {
+  return {
+    id: row.id as string,
+    title: row.title as string,
+    body: row.body as string,
+    category: row.category as string,
+    active: row.active as boolean,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
 // ─── Context types ────────────────────────────────────────────────────────────
 
 interface AppContextValue {
@@ -198,6 +220,11 @@ interface AppContextValue {
   messageLogs: MessageLog[];
   sendMessage: (recipient: string, message: string, template: string) => Promise<void>;
   sendWhatsApp: (phone: string, message: string) => Promise<{ ok: boolean; error?: string }>;
+
+  templates: MessageTemplate[];
+  addTemplate: (data: Omit<MessageTemplate, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  updateTemplate: (id: string, data: Partial<MessageTemplate>) => Promise<void>;
+  deleteTemplate: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -215,6 +242,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [absences, setAbsences] = useState<Absence[]>([]);
   const [messageLogs, setMessageLogs] = useState<MessageLog[]>([]);
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   // ── Derived state ────────────────────────────────────────────────────────
@@ -245,13 +273,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const supabase = await getSupabase();
-      const [tasksRes, eventsRes, itemsRes, contactsRes, absencesRes, logsRes] = await Promise.all([
+      const [tasksRes, eventsRes, itemsRes, contactsRes, absencesRes, logsRes, templatesRes] = await Promise.all([
         supabase.from("tasks").select("*").order("created_at", { ascending: false }),
         supabase.from("events").select("*").order("date", { ascending: true }),
         supabase.from("checklist_items").select("*").order("created_at", { ascending: true }),
         supabase.from("contacts").select("*").order("student_name", { ascending: true }),
         supabase.from("absences").select("*").order("date", { ascending: false }),
         supabase.from("message_logs").select("*").order("sent_at", { ascending: false }),
+        supabase.from("message_templates").select("*").order("created_at", { ascending: true }),
       ]);
 
       const rawTasks = (tasksRes.data || []).map(r => mapTask(r as Record<string, unknown>));
@@ -270,6 +299,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setContacts((contactsRes.data || []).map(r => mapContact(r as Record<string, unknown>)));
       setAbsences((absencesRes.data || []).map(r => mapAbsence(r as Record<string, unknown>)));
       setMessageLogs((logsRes.data || []).map(r => mapMessageLog(r as Record<string, unknown>)));
+      setTemplates((templatesRes.data || []).map(r => mapTemplate(r as Record<string, unknown>)));
     } finally {
       setLoading(false);
     }
@@ -468,6 +498,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       contacts, assignees, addContact, updateContact, deleteContact,
       absences, absenceSummary, addAbsence, updateAbsence, deleteAbsence, notifyParent,
       messageLogs, sendMessage, sendWhatsApp,
+      templates, addTemplate, updateTemplate, deleteTemplate,
     }}>
       {children}
     </AppContext.Provider>

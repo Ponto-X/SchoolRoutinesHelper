@@ -10,20 +10,14 @@ import { TURMAS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
 import { getConfig } from "@/lib/config";
 
-const templates = [
-  { id: "falta",   title: "Falta de Aluno",   text: "Olá! Somos do Colégio 21 de Abril. Notamos que seu(a) filho(a) não compareceu à aula hoje. Está tudo bem? Gostaríamos de saber se há algo que possamos ajudar." },
-  { id: "reuniao", title: "Reunião de Pais",   text: "Olá! O Colégio 21 de Abril convida para a reunião de pais que acontecerá no dia [DATA] às [HORA]. Contamos com sua presença!" },
-  { id: "evento",  title: "Evento Escolar",    text: "Olá! Informamos que o Colégio 21 de Abril realizará o evento [NOME DO EVENTO] no dia [DATA]. Mais detalhes serão enviados em breve!" },
-  { id: "geral",   title: "Comunicado Geral",  text: "Olá! Comunicado do Colégio 21 de Abril: " },
-];
-
 const RECIPIENTS = [
   { value: "todos", label: "Todos os pais" },
   ...TURMAS.map(t => ({ value: t, label: t })),
 ];
 
 export default function Comunicacao() {
-  const { sendMessage, sendWhatsApp, messageLogs, contacts, canAccess } = useApp();
+  const { sendMessage, sendWhatsApp, messageLogs, contacts, canAccess, templates } = useApp();
+  const activeTemplates = templates.filter(t => t.active);
   const { toast } = useToast();
   const canSend = canAccess("comunicacao");
 
@@ -41,8 +35,8 @@ export default function Comunicacao() {
 
   const handleTemplateChange = (templateId: string) => {
     setSelectedTemplate(templateId);
-    const t = templates.find(t => t.id === templateId);
-    if (t) setMessage(t.text);
+    const t = activeTemplates.find(t => t.id === templateId);
+    if (t) setMessage(t.body);
   };
 
   const getTargetContacts = () => {
@@ -106,7 +100,7 @@ export default function Comunicacao() {
             <CardContent className="space-y-4">
               <Select value={selectedTemplate} onValueChange={handleTemplateChange}>
                 <SelectTrigger><SelectValue placeholder="Escolha um modelo (opcional)" /></SelectTrigger>
-                <SelectContent>{templates.map(t => <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>)}</SelectContent>
+                <SelectContent>{activeTemplates.map(t => <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>)}</SelectContent>
               </Select>
 
               <Select value={recipient} onValueChange={setRecipient}>
@@ -140,11 +134,14 @@ export default function Comunicacao() {
           <Card>
             <CardHeader><CardTitle className="text-lg">Modelos</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              {templates.map(t => (
+              {activeTemplates.length === 0 && (
+                <p className="text-xs text-muted-foreground">Nenhum modelo ativo. Crie em <a href="/modelos" className="underline">Modelos</a>.</p>
+              )}
+              {activeTemplates.map(t => (
                 <Button key={t.id} variant="outline" className="w-full justify-start text-left h-auto py-3" onClick={() => handleTemplateChange(t.id)}>
                   <div>
                     <p className="font-medium text-sm">{t.title}</p>
-                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">{t.text.slice(0, 50)}…</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">{t.body.slice(0, 50)}…</p>
                   </div>
                 </Button>
               ))}
