@@ -481,6 +481,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAbsences(prev => prev.map(a => a.id === id ? { ...a, notified: true, notifiedAt } : a));
   }, []);
 
+  // ── Templates ─────────────────────────────────────────────────────────────
+
+  const addTemplate = useCallback(async (data: Omit<MessageTemplate, "id" | "createdAt" | "updatedAt">) => {
+    const supabase = await getSupabase();
+    const { data: row } = await supabase.from("message_templates").insert({
+      title: data.title, body: data.body, category: data.category, active: data.active,
+    }).select().single();
+    if (row) setTemplates(prev => [...prev, mapTemplate(row as Record<string, unknown>)]);
+  }, []);
+
+  const updateTemplate = useCallback(async (id: string, data: Partial<MessageTemplate>) => {
+    const supabase = await getSupabase();
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (data.title    !== undefined) updates.title    = data.title;
+    if (data.body     !== undefined) updates.body     = data.body;
+    if (data.category !== undefined) updates.category = data.category;
+    if (data.active   !== undefined) updates.active   = data.active;
+    await supabase.from("message_templates").update(updates).eq("id", id);
+    setTemplates(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
+  }, []);
+
+  const deleteTemplate = useCallback(async (id: string) => {
+    const supabase = await getSupabase();
+    await supabase.from("message_templates").delete().eq("id", id);
+    setTemplates(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   // ── Messages ──────────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(async (recipient: string, message: string, template: string) => {
