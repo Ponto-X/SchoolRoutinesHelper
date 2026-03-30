@@ -71,21 +71,21 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         "border-b border-white/10"
       )}>
         <div className={cn(
-          "rounded-xl overflow-hidden bg-white/10 backdrop-blur-sm flex items-center justify-center transition-all duration-300",
-          collapsed ? "w-10 h-10 p-1" : "w-16 h-16 p-1.5"
+          "flex items-center justify-center transition-all duration-300",
+          collapsed ? "w-10 h-10" : "w-24 h-24"
         )}>
           <img
             src={logoImg}
             alt="Colégio 21 de Abril"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain drop-shadow-md"
           />
         </div>
         {!collapsed && (
-          <div className="mt-3 text-center px-3">
-            <p className="text-xs font-bold tracking-wide text-white leading-tight">
-              COLÉGIO
+          <div className="mt-1 text-center px-3">
+            <p className="text-[11px] font-bold tracking-widest text-white/60 leading-tight uppercase">
+              Colégio
             </p>
-            <p className="text-sm font-bold text-white/90 leading-tight">
+            <p className="text-sm font-bold text-white leading-tight">
               21 de Abril
             </p>
           </div>
