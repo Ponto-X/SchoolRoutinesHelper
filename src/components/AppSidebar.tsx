@@ -29,10 +29,16 @@ const GROUPS = [
   { key: "comunic", label: "Comunicação"   },
 ];
 
-export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () => void; onCollapseChange?: (c: boolean) => void }) {
   const location  = useLocation();
   const { canAccess } = useApp();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleCollapse = (val: boolean) => {
+    setCollapsed(val);
+    onCollapseChange?.(val);
+    window.dispatchEvent(new CustomEvent("sidebar-toggle", { detail: { collapsed: val } }));
+  };
 
   const items = ALL_ITEMS.filter(item =>
     item.module === "dashboard" || canAccess(item.module)
@@ -44,8 +50,9 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <aside
       className={cn(
-        "relative flex flex-col h-screen flex-shrink-0 transition-all duration-300 ease-in-out",
+        "fixed top-0 left-0 z-20 flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out",
         "bg-[#7B1A1A] text-white select-none",
+        "h-screen overflow-hidden",
         collapsed ? "w-[64px]" : "w-[220px]"
       )}
       style={{
@@ -93,7 +100,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 flex-1 overflow-y-auto py-3 px-2 space-y-4">
+      <nav className="relative z-10 flex-1 overflow-y-auto py-3 px-2 space-y-4 scrollbar-none">
         {GROUPS.map(group => {
           const groupItems = items.filter(i => i.group === group.key);
           if (groupItems.length === 0) return null;
@@ -148,7 +155,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       {/* Collapse toggle */}
       <div className="relative z-10 border-t border-white/10 p-2">
         <button
-          onClick={() => setCollapsed(c => !c)}
+          onClick={() => handleCollapse(!collapsed)}
           className={cn(
             "flex items-center gap-2 w-full rounded-lg px-2.5 py-2 text-white/50 hover:text-white hover:bg-white/10 transition-all text-xs",
             collapsed && "justify-center"
