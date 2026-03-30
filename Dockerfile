@@ -8,8 +8,6 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-RUN npm install -g serve@14
-
 EXPOSE 3000
 
-CMD ["sh", "-c", "serve -s dist --listen tcp://0.0.0.0:${PORT:-3000}"]
+CMD ["node", "server.cjs"]
