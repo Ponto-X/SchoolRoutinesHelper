@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, GraduationCap, Phone } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, GraduationCap, Phone, UserRound, CalendarDays, ChevronRight } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { TURMAS } from "@/lib/constants";
 import { useApp } from "@/context/AppContext";

@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Phone, Mail } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Phone, Mail, School } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { TURMAS, ROLES } from "@/lib/constants";
 import { useApp } from "@/context/AppContext";
@@ -32,17 +32,17 @@ type FormData = {
 const emptyForm: FormData = { name: "", role: "", email: "", phone: "", turmas: [], active: true };
 
 const ROLE_COLORS: Record<string, string> = {
-  Diretora:     "bg-purple-100 text-purple-700 border-purple-200",
-  Coordenadora: "bg-blue-100 text-blue-700 border-blue-200",
-  Secretaria:   "bg-emerald-100 text-emerald-700 border-emerald-200",
-  Professor:    "bg-orange-100 text-orange-700 border-orange-200",
+  Diretora:     "bg-purple-100 text-purple-700 border border-purple-200",
+  Coordenadora: "bg-blue-100 text-blue-700 border border-blue-200",
+  Secretaria:   "bg-emerald-100 text-emerald-700 border border-emerald-200",
+  Professor:    "bg-orange-100 text-orange-700 border border-orange-200",
 };
 
-const ROLE_ICON_COLORS: Record<string, string> = {
-  Diretora:     "text-purple-500",
-  Coordenadora: "text-blue-500",
-  Secretaria:   "text-emerald-500",
-  Professor:    "text-orange-500",
+const ROLE_AVATAR_BG: Record<string, string> = {
+  Diretora:     "bg-purple-100 text-purple-600",
+  Coordenadora: "bg-blue-100 text-blue-600",
+  Secretaria:   "bg-emerald-100 text-emerald-600",
+  Professor:    "bg-orange-100 text-orange-600",
 };
 
 function mapStaff(r: Record<string, unknown>): Staff {
@@ -192,32 +192,59 @@ export default function Colaboradores() {
 
       <div className="space-y-3">
         {filtered.map(member => (
-          <Card key={member.id} className={!member.active ? "opacity-60" : ""}>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-medium">{member.name}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${ROLE_COLORS[member.role] || "bg-gray-100 text-gray-700"}`}>
-                    {member.role}
-                  </span>
-                  {!member.active && <Badge variant="outline" className="text-xs">Inativo</Badge>}
+          <Card key={member.id} className={`transition-all hover:shadow-sm ${!member.active ? "opacity-60" : ""}`}>
+            <CardContent className="p-0">
+              <div className="flex items-center gap-3 px-4 py-3">
+                {/* Avatar */}
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${ROLE_AVATAR_BG[member.role] || "bg-gray-100 text-gray-600"}`}>
+                  {member.name.charAt(0).toUpperCase()}
                 </div>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                  {member.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-green-500" />{member.phone}</span>}
-                  {member.email && <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5 text-blue-400" />{member.email}</span>}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-semibold text-sm truncate">{member.name}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${ROLE_COLORS[member.role] || "bg-gray-100 text-gray-700"}`}>
+                      {member.role}
+                    </span>
+                    {!member.active && <Badge variant="outline" className="text-xs flex-shrink-0">Inativo</Badge>}
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    {member.phone && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />{member.phone}
+                      </span>
+                    )}
+                    {member.email && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground truncate max-w-[180px]">
+                        <Mail className="h-3.5 w-3.5 text-blue-400 flex-shrink-0" />{member.email}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {member.turmas.length > 0 && (
-                  <div className="flex gap-1 flex-wrap mt-1">
-                    {member.turmas.map(t => (
-                      <span key={t} className="text-xs bg-muted px-2 py-0.5 rounded">{t}</span>
-                    ))}
+
+                {/* Actions */}
+                {canEdit && (
+                  <div className="flex gap-1 flex-shrink-0">
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEdit(member)}>
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(member.id)}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 )}
               </div>
-              {canEdit && (
-                <div className="flex gap-2 ml-4">
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(member)}><Pencil className="h-3.5 w-3.5" /></Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(member.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+
+              {/* Turmas strip */}
+              {member.turmas.length > 0 && (
+                <div className="flex items-center gap-2 px-4 pb-3 border-t pt-2">
+                  <School className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                  <div className="flex gap-1 flex-wrap">
+                    {member.turmas.map(t => (
+                      <span key={t} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">{t}</span>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
