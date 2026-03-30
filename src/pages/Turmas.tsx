@@ -297,18 +297,25 @@ export default function Turmas() {
       {/* Turma cards */}
       <div className="space-y-4">
         {turmas.map(turma => (
-          <Card key={turma.id} className={!turma.active ? "opacity-60" : ""}>
-            {/* Header */}
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <button onClick={() => toggleExpand(turma.id)} className="flex items-center gap-2 hover:opacity-70 min-w-0 flex-1">
-                  {turma.expanded ? <ChevronUp className="h-4 w-4 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 flex-shrink-0" />}
+          <Card key={turma.id} className={`transition-all ${!turma.active ? "opacity-60" : ""}`}>
+            <CardContent className="p-0">
+              {/* Header row */}
+              <div className="flex items-center gap-2 px-4 py-3">
+                {/* Expand toggle + name */}
+                <button
+                  onClick={() => toggleExpand(turma.id)}
+                  className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-75 text-left"
+                >
+                  {turma.expanded
+                    ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                    : <ChevronDown className="h-4 w-4 flex-shrink-0 text-muted-foreground" />}
                   <span className="font-semibold text-base truncate">{turma.name}</span>
-                  <Badge variant="outline" className="flex-shrink-0 text-xs">{turma.shift}</Badge>
+                  <Badge variant="outline" className="flex-shrink-0 text-xs font-normal">{turma.shift}</Badge>
                   {!turma.active && <Badge variant="secondary" className="flex-shrink-0 text-xs">Inativa</Badge>}
                 </button>
+                {/* Actions */}
                 {canEdit && (
-                  <div className="flex gap-1 flex-shrink-0 ml-2">
+                  <div className="flex gap-1 flex-shrink-0">
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(turma)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -319,35 +326,47 @@ export default function Turmas() {
                 )}
               </div>
 
-              {/* Quick stats */}
-              <div className="grid grid-cols-3 gap-2 mt-3">
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
-                    <GraduationCap className="h-3.5 w-3.5" />
-                  </div>
-                  <p className="text-lg font-bold leading-none">{turma.students.length}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">alunos</p>
-                </div>
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
-                    <BookOpen className="h-3.5 w-3.5" />
-                  </div>
-                  <p className="text-lg font-bold leading-none">{turma.professors.length}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">prof.</p>
-                </div>
-                <div className="bg-muted rounded-lg p-2 text-center">
-                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
-                    <UserCheck className="h-3.5 w-3.5" />
-                  </div>
-                  <p className="text-lg font-bold leading-none">{turma.coordinators.length}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">coord.</p>
-                </div>
+              {/* Stats strip */}
+              <div className="flex border-t divide-x text-sm">
+                <button
+                  onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "student" })}
+                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors min-w-0"
+                >
+                  <GraduationCap className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="font-semibold">{turma.students.length}</span>
+                  <span className="text-muted-foreground truncate">
+                    {turma.students.length === 1 ? "aluno" : "alunos"}
+                    {turma.students.length > 0 && ` · ${turma.students.slice(0,2).map(s => s.name.split(" ")[0]).join(", ")}${turma.students.length > 2 ? "…" : ""}`}
+                  </span>
+                </button>
+                <button
+                  onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "professor" })}
+                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors min-w-0"
+                >
+                  <BookOpen className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="font-semibold">{turma.professors.length}</span>
+                  <span className="text-muted-foreground truncate">
+                    {turma.professors.length === 1 ? "prof." : "profs."}
+                    {turma.professors.length > 0 && ` · ${turma.professors[0].name.split(" ")[0]}`}
+                  </span>
+                </button>
+                <button
+                  onClick={() => turma.active && setAssocModal({ turmaId: turma.id, turmaName: turma.name, type: "coordinator" })}
+                  className="flex-1 flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors min-w-0"
+                >
+                  <UserCheck className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="font-semibold">{turma.coordinators.length}</span>
+                  <span className="text-muted-foreground truncate">
+                    {turma.coordinators.length === 1 ? "coord." : "coords."}
+                    {turma.coordinators.length > 0 && ` · ${turma.coordinators[0].name.split(" ")[0]}`}
+                  </span>
+                </button>
               </div>
-            </CardHeader>
+            </CardContent>
 
             {/* Expanded content */}
             {turma.expanded && (
-              <CardContent className="pt-0 space-y-4">
+              <div className="border-t px-4 pb-4 pt-3 space-y-4">
                 <div className="h-px bg-border" />
 
                 {/* Professores */}
@@ -439,7 +458,7 @@ export default function Turmas() {
                     </div>
                   )}
                 </div>
-              </CardContent>
+              </div>
             )}
           </Card>
         ))}
