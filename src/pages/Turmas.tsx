@@ -277,18 +277,18 @@ export default function Turmas() {
       </div>
 
       {/* Resumo */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card><CardContent className="p-4 text-center">
-          <p className="text-3xl font-bold">{turmas.filter(t => t.active).length}</p>
-          <p className="text-sm text-muted-foreground">Turmas ativas</p>
+      <div className="grid grid-cols-3 gap-2">
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-2xl font-bold">{turmas.filter(t => t.active).length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Turmas ativas</p>
         </CardContent></Card>
-        <Card><CardContent className="p-4 text-center">
-          <p className="text-3xl font-bold">{allStudents.length}</p>
-          <p className="text-sm text-muted-foreground">Alunos cadastrados</p>
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-2xl font-bold">{allStudents.length}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Alunos cadastrados</p>
         </CardContent></Card>
-        <Card><CardContent className="p-4 text-center">
-          <p className="text-3xl font-bold">{allStudents.filter(s => !s.turma).length}</p>
-          <p className="text-sm text-muted-foreground text-orange-600">Sem turma</p>
+        <Card><CardContent className="p-3 text-center">
+          <p className="text-2xl font-bold text-orange-600">{allStudents.filter(s => !s.turma).length}</p>
+          <p className="text-xs text-orange-500 mt-0.5 leading-tight">Sem turma</p>
         </CardContent></Card>
       </div>
 
@@ -301,16 +301,14 @@ export default function Turmas() {
             {/* Header */}
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => toggleExpand(turma.id)} className="flex items-center gap-2 hover:opacity-70">
-                    {turma.expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    <CardTitle className="text-lg">{turma.name}</CardTitle>
-                  </button>
-                  <Badge variant="outline">{turma.shift}</Badge>
-                  {!turma.active && <Badge variant="secondary">Inativa</Badge>}
-                </div>
+                <button onClick={() => toggleExpand(turma.id)} className="flex items-center gap-2 hover:opacity-70 min-w-0 flex-1">
+                  {turma.expanded ? <ChevronUp className="h-4 w-4 flex-shrink-0" /> : <ChevronDown className="h-4 w-4 flex-shrink-0" />}
+                  <span className="font-semibold text-base truncate">{turma.name}</span>
+                  <Badge variant="outline" className="flex-shrink-0 text-xs">{turma.shift}</Badge>
+                  {!turma.active && <Badge variant="secondary" className="flex-shrink-0 text-xs">Inativa</Badge>}
+                </button>
                 {canEdit && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 flex-shrink-0 ml-2">
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(turma)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -322,16 +320,28 @@ export default function Turmas() {
               </div>
 
               {/* Quick stats */}
-              <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <GraduationCap className="h-4 w-4" />{turma.students.length} alunos
-                </span>
-                <span className="flex items-center gap-1">
-                  <BookOpen className="h-4 w-4" />{turma.professors.length} professor(es)
-                </span>
-                <span className="flex items-center gap-1">
-                  <UserCheck className="h-4 w-4" />{turma.coordinators.length} coordenador(es)
-                </span>
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
+                    <GraduationCap className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="text-lg font-bold leading-none">{turma.students.length}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">alunos</p>
+                </div>
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
+                    <BookOpen className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="text-lg font-bold leading-none">{turma.professors.length}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">prof.</p>
+                </div>
+                <div className="bg-muted rounded-lg p-2 text-center">
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground mb-0.5">
+                    <UserCheck className="h-3.5 w-3.5" />
+                  </div>
+                  <p className="text-lg font-bold leading-none">{turma.coordinators.length}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">coord.</p>
+                </div>
               </div>
             </CardHeader>
 
