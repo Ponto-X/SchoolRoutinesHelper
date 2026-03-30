@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, CheckCircle, Clock, AlertCircle, Pencil, Trash2, Lock } from "lucide-react";
 import { useApp, Task, TaskStatus } from "@/context/AppContext";
+import { getSupabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const STATUS_CYCLE: TaskStatus[] = ["pendente", "em_andamento", "concluida", "atrasada"];
@@ -23,7 +25,15 @@ type FormData = { title: string; description: string; assignee: string; dueDate:
 const emptyForm: FormData = { title: "", description: "", assignee: "", dueDate: "", status: "pendente" };
 
 export default function Tarefas() {
-  const { tasks, addTask, updateTask, deleteTask, assignees, canAccess } = useApp();
+  const { tasks, addTask, updateTask, deleteTask, canAccess } = useApp();
+  const [assignees, setAssignees] = useState<string[]>([]);
+
+  useEffect(() => {
+    getSupabase().then(sb =>
+      sb.from("staff").select("name").eq("active", true).order("name")
+        .then(({ data }) => { if (data) setAssignees(data.map((r: Record<string, unknown>) => r.name as string)); })
+    );
+  }, []);
   const { toast } = useToast();
   const canEdit = canAccess("tasks");
 

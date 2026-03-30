@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, MessageSquare, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { useApp, Absence } from "@/context/AppContext";
+import { getSupabase } from "@/lib/supabase";
 import { TURMAS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
 
 type FormData = { studentName: string; turma: string; date: string; reason: string };
-
-// Students with 3+ absences are at risk
 const RISK_THRESHOLD = 3;
+
+interface StudentOption { name: string; turma: string; parentPhone?: string; parentName?: string; }
 
 export default function Faltas() {
   const { absences, absenceSummary, contacts, addAbsence, updateAbsence, deleteAbsence, notifyParent, sendMessage, sendWhatsApp, canAccess } = useApp();
@@ -23,6 +24,7 @@ export default function Faltas() {
   const canEdit = canAccess("absences");
   const today = new Date().toISOString().split("T")[0];
 
+  const [students, setStudents] = useState<StudentOption[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAbsence, setEditingAbsence] = useState<Absence | null>(null);
   const [form, setForm] = useState<FormData>({ studentName: "", turma: "", date: today, reason: "" });
@@ -30,19 +32,34 @@ export default function Faltas() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterDate, setFilterDate] = useState(today);
 
-  const studentNames = useMemo(() => {
-    const names = contacts.map(c => c.studentName);
-    return [...new Set(names)].sort();
-  }, [contacts]);
+  // Carrega alunos da tabela students
+  const loadStudents = useCallback(async () => {
+    const sb = await getSupabase();
+    const { data } = await sb.from("students").select("name, turma, parent_phone, parent_name").eq("active", true).order("name");
+    if (data) setStudents(data.map(r => ({
+      name: r.name as string,
+      turma: r.turma as string,
+      parentPhone: r.parent_phone as string,
+      parentName: r.parent_name as string,
+    })));
+  }, []);
+
+  useEffect(() => { loadStudents(); }, [loadStudents]);
+
+  // Auto-preenche turma ao selecionar aluno
+  const handleSelectStudent = (name: string) => {
+    const student = students.find(s => s.name === name);
+    setForm(prev => ({ ...prev, studentName: name, turma: student?.turma || prev.turma }));
+  };
 
   const filtered = filterDate ? absences.filter(a => a.date === filterDate) : absences;
   const atRisk = absenceSummary.filter(s => s.total >= RISK_THRESHOLD);
 
   const validate = (): boolean => {
     const e: Partial<FormData> = {};
-    if (!form.studentName.trim()) e.studentName = "Nome do aluno obrigatório";
-    if (!form.turma)              e.turma = "Turma obrigatória";
-    if (!form.date)               e.date = "Data obrigatória";
+    if (!form.studentName.trim()) e.studentName = "Aluno obrigatório";
+    if (!form.turma) e.turma = "Turma obrigatória";
+    if (!form.date) e.date = "Data obrigatória";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -57,31 +74,32 @@ export default function Faltas() {
       toast({ title: "Falta atualizada" });
     } else {
       await addAbsence(form);
-      toast({ title: "Falta registrada", description: `Use o botão Notificar para avisar o responsável de ${form.studentName}.` });
+      toast({ title: "Falta registrada" });
     }
     setDialogOpen(false);
   };
 
   const handleNotify = async (absence: Absence) => {
-    const contact = contacts.find(c =>
-      c.studentName.toLowerCase() === absence.studentName.toLowerCase() && c.turma === absence.turma
-    );
+    // Busca telefone primeiro na tabela students, depois em contacts
+    const student = students.find(s => s.name.toLowerCase() === absence.studentName.toLowerCase());
+    const contact = contacts.find(c => c.studentName.toLowerCase() === absence.studentName.toLowerCase());
+    const phone = student?.parentPhone || contact?.phone;
+    const parentName = student?.parentName || contact?.parentName;
 
-    const message = `Olá! Somos do Colégio 21 de Abril. Notamos que ${absence.studentName} não compareceu à aula em ${absence.date}${absence.reason ? `. Motivo informado: ${absence.reason}` : ""}. Está tudo bem? Qualquer dúvida, estamos à disposição.`;
+    const message = `Olá${parentName ? `, ${parentName}` : ""}! Somos do Colégio 21 de Abril. Informamos que ${absence.studentName} não compareceu à aula em ${absence.date}${absence.reason ? `. Motivo: ${absence.reason}` : ""}. Qualquer dúvida, estamos à disposição.`;
 
     await notifyParent(absence.id);
-    await sendMessage(contact?.phone || `responsável de ${absence.studentName}`, message, "falta");
+    await sendMessage(phone || `responsável de ${absence.studentName}`, message, "falta");
 
-    // Try real WhatsApp if contact has phone
-    if (contact?.phone) {
-      const result = await sendWhatsApp(contact.phone, message);
+    if (phone) {
+      const result = await sendWhatsApp(phone, message);
       if (result.ok) {
-        toast({ title: "✅ WhatsApp enviado!", description: `Mensagem enviada para ${contact.parentName} (${contact.phone}).` });
+        toast({ title: "✅ WhatsApp enviado!", description: `Mensagem enviada para ${parentName || phone}.` });
       } else {
-        toast({ title: "Notificação registrada", description: `WhatsApp não configurado (${result.error}). Registro salvo no histórico.`, variant: "destructive" });
+        toast({ title: "Notificação registrada", description: `Erro ao enviar WhatsApp: ${result.error}`, variant: "destructive" });
       }
     } else {
-      toast({ title: "Notificação registrada", description: `Sem telefone cadastrado para ${absence.studentName}. Cadastre em Contatos.` });
+      toast({ title: "Notificação registrada", description: `Sem telefone cadastrado. Adicione o responsável em Alunos.` });
     }
   };
 
@@ -102,12 +120,11 @@ export default function Faltas() {
         {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Registrar Falta</Button>}
       </div>
 
-      {/* At-risk alert */}
       {atRisk.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
           <div className="flex items-center gap-2 font-medium mb-1">
             <AlertTriangle className="h-4 w-4" />
-            {atRisk.length} aluno(s) com {RISK_THRESHOLD}+ faltas — risco de reprovação por frequência
+            {atRisk.length} aluno(s) com {RISK_THRESHOLD}+ faltas — risco de reprovação
           </div>
           <div className="flex flex-wrap gap-2 mt-1">
             {atRisk.map(s => (
@@ -128,10 +145,9 @@ export default function Faltas() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Tab: Por dia */}
         <TabsContent value="diario" className="space-y-4 mt-4">
           <div className="flex items-center gap-3">
-            <label className="text-sm font-medium">Filtrar por data:</label>
+            <label className="text-sm font-medium">Data:</label>
             <Input type="date" className="w-48" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
             {filterDate && <Button variant="outline" size="sm" onClick={() => setFilterDate("")}>Ver todas</Button>}
           </div>
@@ -179,7 +195,6 @@ export default function Faltas() {
           </div>
         </TabsContent>
 
-        {/* Tab: Histórico por aluno */}
         <TabsContent value="historico" className="space-y-3 mt-4">
           {absenceSummary.length === 0 && (
             <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma falta registrada.</p>
@@ -193,7 +208,7 @@ export default function Faltas() {
                     <p className="text-sm text-muted-foreground">{summary.turma}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`text-2xl font-bold ${summary.total >= RISK_THRESHOLD ? "text-red-600" : "text-foreground"}`}>
+                    <span className={`text-2xl font-bold ${summary.total >= RISK_THRESHOLD ? "text-red-600" : ""}`}>
                       {summary.total}
                     </span>
                     <p className="text-xs text-muted-foreground">faltas</p>
@@ -217,15 +232,18 @@ export default function Faltas() {
           <DialogHeader><DialogTitle>{editingAbsence ? "Editar Falta" : "Registrar Falta"}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <Select value={form.studentName} onValueChange={v => setForm({ ...form, studentName: v })}>
+              <Select value={form.studentName} onValueChange={handleSelectStudent}>
                 <SelectTrigger><SelectValue placeholder="Aluno *" /></SelectTrigger>
                 <SelectContent>
-                  {studentNames.map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                  {students.map(s => (
+                    <SelectItem key={s.name} value={s.name}>{s.name} — {s.turma}</SelectItem>
+                  ))}
                   <SelectItem value="__custom__">Digitar manualmente…</SelectItem>
                 </SelectContent>
               </Select>
               {form.studentName === "__custom__" && (
-                <Input className="mt-2" placeholder="Nome do aluno" onChange={e => setForm({ ...form, studentName: e.target.value })} />
+                <Input className="mt-2" placeholder="Nome do aluno"
+                  onChange={e => setForm({ ...form, studentName: e.target.value })} />
               )}
               {errors.studentName && <p className="text-xs text-destructive mt-1">{errors.studentName}</p>}
             </div>
@@ -241,7 +259,7 @@ export default function Faltas() {
               {errors.date && <p className="text-xs text-destructive mt-1">{errors.date}</p>}
             </div>
             <Textarea placeholder="Motivo (opcional)" value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} rows={2} />
-            <Button onClick={handleSubmit} className="w-full">{editingAbsence ? "Salvar Alterações" : "Registrar Falta"}</Button>
+            <Button onClick={handleSubmit} className="w-full">{editingAbsence ? "Salvar" : "Registrar Falta"}</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -249,7 +267,7 @@ export default function Faltas() {
       <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir registro de falta?</AlertDialogTitle>
+            <AlertDialogTitle>Excluir falta?</AlertDialogTitle>
             <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
