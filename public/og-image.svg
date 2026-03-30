@@ -1,0 +1,28 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0A0A0F"/>
+
+  <!-- Rings -->
+  <circle cx="300" cy="315" r="220" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.06"/>
+  <circle cx="300" cy="315" r="160" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.06"/>
+  <circle cx="300" cy="315" r="115" fill="none" stroke="#E8FF3C" stroke-width="2.5" opacity="0.3"/>
+
+  <!-- X -->
+  <line x1="220" y1="235" x2="380" y2="395" stroke="#E8FF3C" stroke-width="28" stroke-linecap="round"/>
+  <line x1="380" y1="235" x2="220" y2="395" stroke="#E8FF3C" stroke-width="28" stroke-linecap="round"/>
+
+  <!-- Dot -->
+  <circle cx="300" cy="315" r="20" fill="#E8FF3C"/>
+  <circle cx="300" cy="315" r="7" fill="#0A0A0F"/>
+
+  <!-- Divider -->
+  <line x1="450" y1="215" x2="450" y2="415" stroke="#333" stroke-width="1.5"/>
+
+  <!-- Brand -->
+  <text x="490" y="345" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="112" fill="#ffffff" letter-spacing="-3">Ponto-X</text>
+
+  <!-- Sub -->
+  <text x="493" y="400" font-family="system-ui, -apple-system, sans-serif" font-weight="400" font-size="28" fill="#888888" letter-spacing="8">TECNOLOGIA</text>
+
+  <!-- App name -->
+  <text x="493" y="445" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="22" fill="#E8FF3C" letter-spacing="3">Sistema Escolar · Colégio 21 de Abril</text>
+</svg>
