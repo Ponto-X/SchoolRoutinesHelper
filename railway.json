@@ -2,7 +2,15 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile"
+    "dockerfilePath": "Dockerfile",
+    "buildArgs": {
+      "VITE_SUPABASE_URL": "${{VITE_SUPABASE_URL}}",
+      "VITE_SUPABASE_ANON_KEY": "${{VITE_SUPABASE_ANON_KEY}}",
+      "VITE_WHATSAPP_PROVIDER": "${{VITE_WHATSAPP_PROVIDER}}",
+      "VITE_EVOLUTION_API_URL": "${{VITE_EVOLUTION_API_URL}}",
+      "VITE_EVOLUTION_API_KEY": "${{VITE_EVOLUTION_API_KEY}}",
+      "VITE_EVOLUTION_INSTANCE": "${{VITE_EVOLUTION_INSTANCE}}"
+    }
   },
   "deploy": {
     "healthcheckPath": "/",
