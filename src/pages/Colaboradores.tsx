@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Pencil, Trash2, Phone, Mail, School } from "lucide-react";
+import { ListCard } from "@/components/ListCard";
+import { Plus, Search, Phone, Mail, School } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { TURMAS, ROLES } from "@/lib/constants";
 import { useApp } from "@/context/AppContext";
@@ -192,63 +192,42 @@ export default function Colaboradores() {
 
       <div className="space-y-3">
         {filtered.map(member => (
-          <Card key={member.id} className={`transition-all hover:shadow-sm ${!member.active ? "opacity-60" : ""}`}>
-            <CardContent className="p-0">
-              <div className="flex items-center gap-3 px-4 py-3">
-                {/* Avatar */}
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${ROLE_AVATAR_BG[member.role] || "bg-gray-100 text-gray-600"}`}>
-                  {member.name.charAt(0).toUpperCase()}
+          <ListCard
+            key={member.id}
+            initial={member.name.charAt(0).toUpperCase()}
+            avatarColor={
+              member.role === "Diretora" ? "purple" :
+              member.role === "Coordenadora" ? "blue" :
+              member.role === "Secretaria" ? "emerald" : "orange"
+            }
+            title={member.name}
+            inactive={!member.active}
+            badges={
+              <>
+                <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${ROLE_COLORS[member.role] || "bg-gray-100 text-gray-700"}`}>
+                  {member.role}
+                </span>
+                {!member.active && <Badge variant="outline" className="text-xs">Inativo</Badge>}
+              </>
+            }
+            details={[
+              ...(member.phone ? [{ icon: <Phone className="h-3.5 w-3.5 text-green-500" />, label: member.phone }] : []),
+              ...(member.email ? [{ icon: <Mail className="h-3.5 w-3.5 text-blue-400" />, label: member.email }] : []),
+            ]}
+            extra={member.turmas.length > 0 ? (
+              <div className="flex items-center gap-2">
+                <School className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                <div className="flex gap-1 flex-wrap">
+                  {member.turmas.map(t => (
+                    <span key={t} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">{t}</span>
+                  ))}
                 </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-sm truncate">{member.name}</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${ROLE_COLORS[member.role] || "bg-gray-100 text-gray-700"}`}>
-                      {member.role}
-                    </span>
-                    {!member.active && <Badge variant="outline" className="text-xs flex-shrink-0">Inativo</Badge>}
-                  </div>
-                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                    {member.phone && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Phone className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />{member.phone}
-                      </span>
-                    )}
-                    {member.email && (
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground truncate max-w-[180px]">
-                        <Mail className="h-3.5 w-3.5 text-blue-400 flex-shrink-0" />{member.email}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                {canEdit && (
-                  <div className="flex gap-1 flex-shrink-0">
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEdit(member)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(member.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                )}
               </div>
-
-              {/* Turmas strip */}
-              {member.turmas.length > 0 && (
-                <div className="flex items-center gap-2 px-4 pb-3 border-t pt-2">
-                  <School className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-                  <div className="flex gap-1 flex-wrap">
-                    {member.turmas.map(t => (
-                      <span key={t} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            ) : undefined}
+            canEdit={canEdit}
+            onEdit={() => openEdit(member)}
+            onDelete={() => setDeleteId(member.id)}
+          />
         ))}
       </div>
 

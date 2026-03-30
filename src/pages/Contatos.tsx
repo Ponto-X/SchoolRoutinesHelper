@@ -1,17 +1,16 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Plus, Phone, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Phone, GraduationCap, UserRound } from "lucide-react";
 import { useApp, Contact } from "@/context/AppContext";
 import { TURMAS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
+import { ListCard } from "@/components/ListCard";
 
 const PHONE_REGEX = /^55\d{10,11}$/;
-
 type FormData = { studentName: string; parentName: string; phone: string; turma: string };
 const emptyForm: FormData = { studentName: "", parentName: "", phone: "", turma: "" };
 
@@ -33,18 +32,14 @@ export default function Contatos() {
     c.turma.toLowerCase().includes(search.toLowerCase())
   );
 
-  const validate = (): boolean => {
+  const validate = () => {
     const e: Partial<FormData> = {};
     if (!form.studentName.trim()) e.studentName = "Nome do aluno obrigatório";
     if (!form.parentName.trim())  e.parentName = "Nome do responsável obrigatório";
-    if (!form.phone.trim()) {
-      e.phone = "Telefone obrigatório";
-    } else if (!PHONE_REGEX.test(form.phone.trim())) {
-      e.phone = "Formato inválido. Use: 5511999990000 (DDI 55 + DDD + número)";
-    }
+    if (!form.phone.trim()) e.phone = "Telefone obrigatório";
+    else if (!PHONE_REGEX.test(form.phone.trim())) e.phone = "Formato inválido. Use: 5511999990000";
     if (!form.turma) e.turma = "Turma obrigatória";
-    setErrors(e);
-    return Object.keys(e).length === 0;
+    setErrors(e); return Object.keys(e).length === 0;
   };
 
   const openCreate = () => { setEditingContact(null); setForm(emptyForm); setErrors({}); setDialogOpen(true); };
@@ -52,21 +47,14 @@ export default function Contatos() {
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    if (editingContact) {
-      await updateContact(editingContact.id, form);
-      toast({ title: "Contato atualizado" });
-    } else {
-      await addContact(form);
-      toast({ title: "Contato adicionado" });
-    }
+    if (editingContact) { await updateContact(editingContact.id, form); toast({ title: "Contato atualizado" }); }
+    else { await addContact(form); toast({ title: "Contato adicionado" }); }
     setDialogOpen(false);
   };
 
   const confirmDelete = async () => {
     if (!deleteId) return;
-    await deleteContact(deleteId);
-    setDeleteId(null);
-    toast({ title: "Contato removido" });
+    await deleteContact(deleteId); setDeleteId(null); toast({ title: "Contato removido" });
   };
 
   return (
@@ -76,7 +64,7 @@ export default function Contatos() {
           <h1 className="text-2xl font-bold">Contatos</h1>
           <p className="text-muted-foreground">Pais e responsáveis dos alunos</p>
         </div>
-        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Novo Contato</Button>}
+        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo Contato</Button>}
       </div>
 
       <div className="relative">
@@ -84,34 +72,28 @@ export default function Contatos() {
         <Input placeholder="Buscar por aluno, responsável ou turma…" className="pl-10" value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
-      {filtered.length === 0 && (
-        <p className="text-sm text-muted-foreground py-4 text-center">
-          {search ? "Nenhum contato encontrado." : "Nenhum contato cadastrado."}
-        </p>
-      )}
+      {filtered.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum contato encontrado.</p>}
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {filtered.map(contact => (
-          <Card key={contact.id}>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="space-y-1">
-                <p className="font-medium">{contact.studentName}</p>
-                <p className="text-sm text-muted-foreground">Responsável: {contact.parentName}</p>
-                <p className="text-sm text-muted-foreground">Turma: {contact.turma}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4 text-green-500" />{contact.phone}
-                </div>
-                {canEdit && (
-                  <>
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(contact)}><Pencil className="h-3.5 w-3.5" /></Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteId(contact.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <ListCard
+            key={contact.id}
+            initial={contact.studentName.charAt(0).toUpperCase()}
+            avatarColor="green"
+            title={contact.studentName}
+            badges={
+              <span className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                <GraduationCap className="h-3.5 w-3.5 text-blue-500" />{contact.turma}
+              </span>
+            }
+            details={[
+              { icon: <UserRound className="h-3.5 w-3.5 text-purple-400" />, label: contact.parentName },
+              { icon: <Phone className="h-3.5 w-3.5 text-green-500" />, label: contact.phone },
+            ]}
+            canEdit={canEdit}
+            onEdit={() => openEdit(contact)}
+            onDelete={() => setDeleteId(contact.id)}
+          />
         ))}
       </div>
 
@@ -138,17 +120,14 @@ export default function Contatos() {
               </Select>
               {errors.turma && <p className="text-xs text-destructive mt-1">{errors.turma}</p>}
             </div>
-            <Button onClick={handleSubmit} className="w-full">{editingContact ? "Salvar Alterações" : "Adicionar Contato"}</Button>
+            <Button onClick={handleSubmit} className="w-full">{editingContact ? "Salvar" : "Adicionar Contato"}</Button>
           </div>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remover contato?</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-          </AlertDialogHeader>
+          <AlertDialogHeader><AlertDialogTitle>Remover contato?</AlertDialogTitle><AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remover</AlertDialogAction>
