@@ -58,9 +58,7 @@ export default function Dashboard() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Olá, <strong>{user?.name}</strong> — {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-        </p>
+        <p className="text-sm text-muted-foreground">Olá, <strong>{user?.name}</strong> — {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</p>
       </div>
 
       {/* Alertas */}
@@ -107,7 +105,7 @@ export default function Dashboard() {
           <button onClick={() => navigate("/turmas")} className="text-left w-full">
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
               <CardContent className="p-3 flex flex-col items-center justify-center text-center gap-1.5">
-                <div className="p-2 bg-primary/10 rounded-lg"><School className="h-5 w-5 text-primary" /></div>
+                <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center"><School className="h-5 w-5 text-red-600" /></div>
                 <p className="text-2xl font-bold leading-none">{counts.turmas}</p>
                 <p className="text-xs text-muted-foreground">Turmas</p>
               </CardContent>
@@ -118,7 +116,7 @@ export default function Dashboard() {
           <button onClick={() => navigate("/alunos")} className="text-left w-full">
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
               <CardContent className="p-3 flex flex-col items-center justify-center text-center gap-1.5">
-                <div className="p-2 bg-green-100 rounded-lg"><GraduationCap className="h-5 w-5 text-green-700" /></div>
+                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center"><GraduationCap className="h-5 w-5 text-green-600" /></div>
                 <p className="text-2xl font-bold leading-none">{counts.students}</p>
                 <p className="text-xs text-muted-foreground">Alunos</p>
               </CardContent>
@@ -129,7 +127,7 @@ export default function Dashboard() {
           <button onClick={() => navigate("/colaboradores")} className="text-left w-full">
             <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
               <CardContent className="p-3 flex flex-col items-center justify-center text-center gap-1.5">
-                <div className="p-2 bg-purple-100 rounded-lg"><UsersRound className="h-5 w-5 text-purple-700" /></div>
+                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center"><UsersRound className="h-5 w-5 text-purple-600" /></div>
                 <p className="text-2xl font-bold leading-none">{counts.staff}</p>
                 <p className="text-xs text-muted-foreground">Colab.</p>
               </CardContent>
