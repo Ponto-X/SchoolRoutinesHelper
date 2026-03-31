@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, GraduationCap, Phone, UserRound, CalendarDays } from "lucide-react";
+import { Plus, Search, GraduationCap, Phone, UserRound } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { TURMAS } from "@/lib/constants";
 import { useApp } from "@/context/AppContext";
@@ -174,9 +174,9 @@ export default function Alunos() {
               </>
             }
             details={[
-              ...(student.parentName ? [{ icon: <UserRound className="h-3.5 w-3.5 text-purple-400" />, label: student.parentName }] : []),
-              ...(student.parentPhone ? [{ icon: <Phone className="h-3.5 w-3.5 text-green-500" />, label: student.parentPhone }] : []),
-              ...(student.birthDate ? [{ icon: <CalendarDays className="h-3.5 w-3.5 text-orange-400" />, label: new Date(student.birthDate).toLocaleDateString("pt-BR") }] : []),
+              ...(student.parentName ? [{ icon: <UserRound className="h-3 w-3 text-purple-400" />, label: student.parentName }] : []),
+              ...(student.parentPhone ? [{ icon: <Phone className="h-3 w-3 text-green-500" />, label: student.parentPhone }] : []),
+              ...(student.birthDate ? [{ icon: <CalendarDays className="h-3 w-3 text-orange-400" />, label: new Date(student.birthDate).toLocaleDateString("pt-BR") }] : []),
             ]}
             note={student.notes}
             canEdit={canEdit}
