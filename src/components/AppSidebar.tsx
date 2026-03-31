@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import logoImg from "@/assets/logo-colegio.png";
+import logoImg from "@/assets/logo-colegio.jpg";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
@@ -73,19 +73,21 @@ export function AppSidebar({ onNavigate, onCollapseChange, isMobile }: { onNavig
         </svg>
       </div>
 
-      {/* Logo area — fills full width */}
+      {/* Logo area — white bg matches original logo background */}
       <div className={cn(
-        "relative z-10 border-b border-white/10 overflow-hidden",
+        "relative z-10 overflow-hidden",
         isCollapsed ? "p-2" : "p-0"
       )}>
         {isCollapsed ? (
-          <img src={logoImg} alt="Colégio 21 de Abril" className="w-10 h-10 object-contain mx-auto" />
+          <div className="bg-white rounded-lg p-1 mx-auto w-10 h-10 flex items-center justify-center">
+            <img src={logoImg} alt="Colégio 21 de Abril" className="w-full h-full object-contain" />
+          </div>
         ) : (
           <img
             src={logoImg}
             alt="Colégio 21 de Abril"
-            className="w-full h-auto object-contain block"
-            style={{ maxHeight: "200px" }}
+            className="w-full h-auto object-cover block"
+            style={{ maxHeight: "220px" }}
           />
         )}
       </div>
