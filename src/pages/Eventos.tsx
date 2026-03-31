@@ -69,7 +69,7 @@ export default function Eventos() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Agenda de Eventos"
+        title="Eventos"
         description="Eventos e checklists de preparação"
         action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo Evento</Button> : undefined}
       />

@@ -6,33 +6,16 @@ interface Props {
   action?: ReactNode;
 }
 
-/**
- * PageHeader — padrão profissional mobile + desktop:
- *
- * Mobile  (<640px): título em cima, botão full-width embaixo
- * Desktop (≥640px): título à esquerda, botão à direita — nunca quebra
- *
- * Inspirado em: Linear, Vercel Dashboard, Notion
- */
 export function PageHeader({ title, description, action }: Props) {
   return (
-    <div>
-      {/* Desktop: side by side | Mobile: stack */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight truncate">{title}</h1>
-          {description && (
-            <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
-          )}
-        </div>
-
-        {action && (
-          /* Mobile: full width | Desktop: auto width */
-          <div className="sm:flex-shrink-0 [&>*]:w-full [&>*]:sm:w-auto">
-            {action}
-          </div>
-        )}
+    <div className="space-y-0.5">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight leading-tight">{title}</h1>
+        {action && <div className="flex-shrink-0">{action}</div>}
       </div>
+      {description && (
+        <p className="text-sm text-muted-foreground">{description}</p>
+      )}
     </div>
   );
 }

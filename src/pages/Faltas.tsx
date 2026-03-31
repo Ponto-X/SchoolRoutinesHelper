@@ -114,7 +114,7 @@ export default function Faltas() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Controle de Faltas"
+        title="Faltas"
         description="Registre e notifique responsáveis"
         action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Registrar Falta</Button> : undefined}
       />

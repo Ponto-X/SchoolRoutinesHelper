@@ -93,7 +93,7 @@ export default function Tarefas() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Tarefas & Rotinas"
+        title="Tarefas"
         description="Gerencie as tarefas da equipe"
         action={<Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Nova Tarefa</Button>}
       />
