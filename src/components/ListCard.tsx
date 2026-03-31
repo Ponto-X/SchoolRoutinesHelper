@@ -48,7 +48,7 @@ export function ListCard({ initial, avatarColor = "blue", title, badges, details
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
               {details.map((d, i) => (
                 <span key={i} className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  {d.icon}<span className="truncate max-w-[120px]">{d.label}</span>
+                  {d.icon}<span className="truncate max-w-[240px]">{d.label}</span>
                 </span>
               ))}
             </div>
