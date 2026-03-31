@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import logoImg from "@/assets/logo-colegio.png";
+import logoImg from "@/assets/logo-colegio.svg";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
@@ -88,16 +88,7 @@ export function AppSidebar({ onNavigate, onCollapseChange, isMobile }: { onNavig
             className="w-full h-full object-contain drop-shadow-md"
           />
         </div>
-        {!isCollapsed && (
-          <div className="mt-1 text-center px-3">
-            <p className="text-[11px] font-bold tracking-widest text-white/60 leading-tight uppercase">
-              Colégio
-            </p>
-            <p className="text-sm font-bold text-white leading-tight">
-              21 de Abril
-            </p>
-          </div>
-        )}
+
       </div>
 
       {/* Navigation */}
