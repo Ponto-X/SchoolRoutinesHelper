@@ -92,15 +92,11 @@ export default function Modelos() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Modelos de Mensagem</h1>
-          <p className="text-muted-foreground">Crie e gerencie modelos para comunicação com os pais</p>
-        </div>
-        {canEdit && (
-          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Novo Modelo</Button>
-        )}
-      </div>
+      <PageHeader
+        title="Modelos"
+        description="Modelos para comunicação com os pais"
+        action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo Modelo</Button> : undefined}
+      />
 
       {/* Filtros */}
       <div className="flex gap-2 flex-wrap">
