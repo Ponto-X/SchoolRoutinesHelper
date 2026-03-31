@@ -7,40 +7,32 @@ interface Props {
 }
 
 /**
- * PageHeader — UI Engineering Decision:
+ * PageHeader — padrão profissional mobile + desktop:
  *
- * Mobile (<640px):
- *   - Título ocupa 100% da largura — nunca compete com botão
- *   - Botão abaixo em largura total — fácil de tocar (44px+ touch target)
- *   - Descrição discreta entre título e botão
+ * Mobile  (<640px): título em cima, botão full-width embaixo
+ * Desktop (≥640px): título à esquerda, botão à direita — nunca quebra
  *
- * Desktop (≥640px):
- *   - Título + descrição à esquerda, botão à direita na mesma linha
- *   - Alinhamento pelo baseline inferior do bloco de texto
- *   - Padrão Linear, Vercel, Notion, GitHub
+ * Inspirado em: Linear, Vercel Dashboard, Notion
  */
 export function PageHeader({ title, description, action }: Props) {
   return (
-    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-      {/* Left: title + description */}
-      <div className="min-w-0">
-        <h1 className="text-2xl font-bold leading-tight tracking-tight">
-          {title}
-        </h1>
-        {description && (
-          <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
-        )}
-      </div>
+    <div>
+      {/* Desktop: side by side | Mobile: stack */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight truncate">{title}</h1>
+          {description && (
+            <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
+          )}
+        </div>
 
-      {/* Action: full width on mobile, auto on desktop */}
-      {action && (
-        <div className="w-full sm:w-auto flex-shrink-0">
-          <div className="[&>button]:w-full sm:[&>button]:w-auto
-                          [&>a>button]:w-full sm:[&>a>button]:w-auto">
+        {action && (
+          /* Mobile: full width | Desktop: auto width */
+          <div className="sm:flex-shrink-0 [&>*]:w-full [&>*]:sm:w-auto">
             {action}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
