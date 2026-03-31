@@ -80,12 +80,12 @@ export function AppSidebar({ onNavigate, onCollapseChange, isMobile }: { onNavig
       )}>
         <div className={cn(
           "flex items-center justify-center transition-all duration-300",
-          isCollapsed ? "w-10 h-10" : "w-24 h-24"
+          isCollapsed ? "w-10 h-10" : "w-28 h-28"
         )}>
           <img
             src={logoImg}
             alt="Colégio 21 de Abril"
-            className="w-full h-full object-contain drop-shadow-md"
+            className="w-full h-full object-contain"
           />
         </div>
 
