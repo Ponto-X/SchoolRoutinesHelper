@@ -73,22 +73,51 @@ export function AppSidebar({ onNavigate, onCollapseChange, isMobile }: { onNavig
         </svg>
       </div>
 
-      {/* Logo area — white bg matches original logo background */}
-      <div className={cn(
-        "relative z-10 overflow-hidden",
-        isCollapsed ? "p-2" : "p-0"
-      )}>
+      {/* Logo area */}
+      <div className={cn("relative z-10 overflow-hidden", isCollapsed ? "p-2" : "p-0")}>
         {isCollapsed ? (
           <div className="bg-white rounded-lg p-1 mx-auto w-10 h-10 flex items-center justify-center">
             <img src={logoImg} alt="Colégio 21 de Abril" className="w-full h-full object-contain" />
           </div>
         ) : (
-          <img
-            src={logoImg}
-            alt="Colégio 21 de Abril"
-            className="w-full h-auto object-cover block"
-            style={{ maxHeight: "220px" }}
-          />
+          <div className="relative" style={{ maxHeight: "220px", overflow: "hidden" }}>
+            {/* Logo image */}
+            <img
+              src={logoImg}
+              alt="Colégio 21 de Abril"
+              className="w-full h-auto object-cover block relative z-10"
+              style={{ maxHeight: "220px" }}
+            />
+            {/* Decorative globe-grid overlay — bottom fade harmonizing white into sidebar */}
+            <div className="absolute inset-0 z-20 pointer-events-none">
+              <svg
+                width="100%" height="100%"
+                viewBox="0 0 220 220"
+                preserveAspectRatio="xMidYMid slice"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Elliptic grid referencing the logo globe — very subtle */}
+                <g opacity="0.07" fill="none" stroke="#CC3300" strokeWidth="1">
+                  <ellipse cx="110" cy="110" rx="100" ry="80"/>
+                  <ellipse cx="110" cy="110" rx="75"  ry="80"/>
+                  <ellipse cx="110" cy="110" rx="45"  ry="80"/>
+                  <ellipse cx="110" cy="110" rx="18"  ry="80"/>
+                  <line x1="10"  y1="80"  x2="210" y2="80"/>
+                  <line x1="10"  y1="110" x2="210" y2="110"/>
+                  <line x1="10"  y1="140" x2="210" y2="140"/>
+                </g>
+                {/* Bottom gradient: white fades into sidebar red */}
+                <defs>
+                  <linearGradient id="fadeDown" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stop-color="#ffffff" stop-opacity="0"/>
+                    <stop offset="72%"  stop-color="#ffffff" stop-opacity="0"/>
+                    <stop offset="100%" stop-color="#6B1515" stop-opacity="1"/>
+                  </linearGradient>
+                </defs>
+                <rect width="220" height="220" fill="url(#fadeDown)"/>
+              </svg>
+            </div>
+          </div>
         )}
       </div>
 
