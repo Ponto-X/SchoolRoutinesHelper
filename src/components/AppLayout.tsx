@@ -1,7 +1,7 @@
 import { Outlet, useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Loader2, Menu, X } from "lucide-react";
+import { LogOut, User, Loader2, Menu } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useState, useEffect } from "react";
 
@@ -63,13 +63,7 @@ export default function AppLayout() {
               onCollapseChange={setCollapsed}
             />
 
-            {/* Close button */}
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 z-10 p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+
           </div>
         </div>
       )}
