@@ -73,22 +73,21 @@ export function AppSidebar({ onNavigate, onCollapseChange, isMobile }: { onNavig
         </svg>
       </div>
 
-      {/* Logo area */}
+      {/* Logo area — fills full width */}
       <div className={cn(
-        "relative z-10 flex flex-col items-center pt-6 pb-4",
-        "border-b border-white/10"
+        "relative z-10 border-b border-white/10 overflow-hidden",
+        isCollapsed ? "p-2" : "p-0"
       )}>
-        <div className={cn(
-          "flex items-center justify-center transition-all duration-300",
-          isCollapsed ? "w-10 h-10" : "w-28 h-28"
-        )}>
+        {isCollapsed ? (
+          <img src={logoImg} alt="Colégio 21 de Abril" className="w-10 h-10 object-contain mx-auto" />
+        ) : (
           <img
             src={logoImg}
             alt="Colégio 21 de Abril"
-            className="w-full h-full object-contain"
+            className="w-full h-auto object-contain block"
+            style={{ maxHeight: "200px" }}
           />
-        </div>
-
+        )}
       </div>
 
       {/* Navigation */}
