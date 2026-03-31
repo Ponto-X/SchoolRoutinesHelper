@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
-import logoImg from "@/assets/logo-colegio.svg";
+import logoImg from "@/assets/logo-colegio.png";
 import { useApp } from "@/context/AppContext";
 import { cn } from "@/lib/utils";
 
