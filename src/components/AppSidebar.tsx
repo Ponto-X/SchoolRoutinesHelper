@@ -29,10 +29,11 @@ const GROUPS = [
   { key: "comunic", label: "Comunicação"   },
 ];
 
-export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () => void; onCollapseChange?: (c: boolean) => void }) {
+export function AppSidebar({ onNavigate, onCollapseChange, isMobile }: { onNavigate?: () => void; onCollapseChange?: (c: boolean) => void; isMobile?: boolean }) {
   const location  = useLocation();
   const { canAccess } = useApp();
   const [collapsed, setCollapsed] = useState(false);
+  const isCollapsed = isMobile ? false : collapsed;
 
   const handleCollapse = (val: boolean) => {
     setCollapsed(val);
@@ -53,7 +54,7 @@ export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () =
         "fixed top-0 left-0 z-20 flex flex-col flex-shrink-0 transition-all duration-300 ease-in-out",
         "bg-[#7B1A1A] text-white select-none",
         "h-screen overflow-hidden",
-        collapsed ? "w-[64px]" : "w-[220px]"
+        isCollapsed ? "w-[64px]" : "w-[220px]"
       )}
       style={{
         background: "linear-gradient(160deg, #8B2020 0%, #6B1515 60%, #5A1010 100%)",
@@ -79,7 +80,7 @@ export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () =
       )}>
         <div className={cn(
           "flex items-center justify-center transition-all duration-300",
-          collapsed ? "w-10 h-10" : "w-24 h-24"
+          isCollapsed ? "w-10 h-10" : "w-24 h-24"
         )}>
           <img
             src={logoImg}
@@ -87,7 +88,7 @@ export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () =
             className="w-full h-full object-contain drop-shadow-md"
           />
         </div>
-        {!collapsed && (
+        {!isCollapsed && (
           <div className="mt-1 text-center px-3">
             <p className="text-[11px] font-bold tracking-widest text-white/60 leading-tight uppercase">
               Colégio
@@ -106,7 +107,7 @@ export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () =
           if (groupItems.length === 0) return null;
           return (
             <div key={group.key}>
-              {!collapsed && (
+              {!isCollapsed && (
                 <p className="text-[10px] font-semibold tracking-widest uppercase text-white/35 px-2 mb-1">
                   {group.label}
                 </p>
@@ -129,17 +130,17 @@ export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () =
                         )}
                       >
                         {/* Active indicator bar */}
-                        {active && !collapsed && (
+                        {active && !isCollapsed && (
                           <span className="absolute left-0 w-0.5 h-6 bg-white rounded-r-full" />
                         )}
                         <item.icon
                           className={cn(
                             "flex-shrink-0 transition-all",
-                            collapsed ? "h-5 w-5" : "h-4 w-4",
+                            isCollapsed ? "h-5 w-5" : "h-4 w-4",
                             active ? "text-white" : "text-white/60"
                           )}
                         />
-                        {!collapsed && (
+                        {!isCollapsed && (
                           <span className="truncate">{item.title}</span>
                         )}
                       </Link>
@@ -152,13 +153,13 @@ export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () =
         })}
       </nav>
 
-      {/* Collapse toggle */}
-      <div className="relative z-10 border-t border-white/10 p-2">
+      {/* Collapse toggle — desktop only */}
+      {!isMobile && <div className="relative z-10 border-t border-white/10 p-2">
         <button
           onClick={() => handleCollapse(!collapsed)}
           className={cn(
             "flex items-center gap-2 w-full rounded-lg px-2.5 py-2 text-white/50 hover:text-white hover:bg-white/10 transition-all text-xs",
-            collapsed && "justify-center"
+            isCollapsed && "justify-center"
           )}
         >
           {collapsed
@@ -166,7 +167,7 @@ export function AppSidebar({ onNavigate, onCollapseChange }: { onNavigate?: () =
             : <><ChevronLeft className="h-4 w-4" /><span>Recolher</span></>
           }
         </button>
-      </div>
+      </div>}
     </aside>
   );
 }
