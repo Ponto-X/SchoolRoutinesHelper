@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, Search, Phone, GraduationCap, UserRound } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp, Contact } from "@/context/AppContext";
 import { TURMAS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
@@ -59,13 +60,11 @@ export default function Contatos() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Contatos</h1>
-          <p className="text-muted-foreground">Pais e responsáveis dos alunos</p>
-        </div>
-        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo Contato</Button>}
-      </div>
+      <PageHeader
+        title="Contatos"
+        description="Pais e responsáveis dos alunos"
+        action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo Contato</Button> : undefined}
+      />
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

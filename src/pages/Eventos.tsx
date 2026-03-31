@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Calendar as CalendarIcon, Pencil, Trash2, X, Bell } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp, Event } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -67,13 +68,11 @@ export default function Eventos() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Agenda de Eventos</h1>
-          <p className="text-muted-foreground">Eventos e checklists de preparação</p>
-        </div>
-        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Novo Evento</Button>}
-      </div>
+      <PageHeader
+        title="Agenda de Eventos"
+        description="Eventos e checklists de preparação"
+        action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo Evento</Button> : undefined}
+      />
 
       {/* Urgent events alert */}
       {urgentEvents.length > 0 && (

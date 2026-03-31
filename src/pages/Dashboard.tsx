@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckSquare, Calendar, UserX, MessageSquare, Bell, AlertTriangle, GraduationCap, UsersRound, School, ArrowRight } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp } from "@/context/AppContext";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";

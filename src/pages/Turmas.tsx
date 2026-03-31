@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, GraduationCap, UserCheck, Users, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -268,13 +269,11 @@ export default function Turmas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Turmas</h1>
-          <p className="text-muted-foreground">Gerencie turmas, alunos e professores</p>
-        </div>
-        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Nova Turma</Button>}
-      </div>
+      <PageHeader
+        title="Turmas"
+        description="Gerencie turmas, alunos e professores"
+        action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Nova Turma</Button> : undefined}
+      />
 
       {/* Resumo */}
       <div className="flex gap-3">

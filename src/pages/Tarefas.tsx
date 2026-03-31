@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Plus, CheckCircle, Clock, AlertCircle, Pencil, Trash2, Lock } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp, Task, TaskStatus } from "@/context/AppContext";
 import { getSupabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
@@ -91,15 +92,11 @@ export default function Tarefas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Tarefas & Rotinas</h1>
-          <p className="text-muted-foreground">Gerencie as tarefas da equipe</p>
-        </div>
-        {canEdit && (
-          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Nova Tarefa</Button>
-        )}
-      </div>
+      <PageHeader
+        title="Tarefas & Rotinas"
+        description="Gerencie as tarefas da equipe"
+        action={<Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Nova Tarefa</Button>}
+      />
 
       {/* Overdue alert */}
       {tasks.filter(t => t.status === "atrasada").length > 0 && (

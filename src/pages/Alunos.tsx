@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, GraduationCap, Phone, UserRound } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { TURMAS } from "@/lib/constants";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { ListCard } from "@/components/ListCard";
@@ -117,13 +118,11 @@ export default function Alunos() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Alunos</h1>
-          <p className="text-muted-foreground">Cadastro e gestão de alunos</p>
-        </div>
-        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo Aluno</Button>}
-      </div>
+      <PageHeader
+        title="Alunos"
+        description="Cadastro e gestão de alunos"
+        action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo Aluno</Button> : undefined}
+      />
 
       {/* Turma counts */}
       <div className="flex gap-2 overflow-x-auto pb-1">

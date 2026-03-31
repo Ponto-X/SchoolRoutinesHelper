@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Send, Clock, Loader2, Settings, ChevronRight } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp } from "@/context/AppContext";
 import { TURMAS } from "@/lib/constants";
 import { useToast } from "@/hooks/use-toast";
@@ -118,17 +119,11 @@ export default function Comunicacao() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Comunicação</h1>
-          <p className="text-muted-foreground">Envie mensagens para pais e responsáveis</p>
-        </div>
-        <Link to="/modelos">
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" /> Gerenciar Modelos
-          </Button>
-        </Link>
-      </div>
+      <PageHeader
+        title="Comunicação"
+        description="Envie mensagens para pais e responsáveis"
+        action={<Link to="/modelos"><Button variant="outline" size="sm"><Settings className="h-4 w-4 mr-2" />Modelos</Button></Link>}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Formulário principal */}

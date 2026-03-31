@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, MessageSquare, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp, Absence } from "@/context/AppContext";
 import { getSupabase } from "@/lib/supabase";
 import { TURMAS } from "@/lib/constants";
@@ -112,13 +113,11 @@ export default function Faltas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Controle de Faltas</h1>
-          <p className="text-muted-foreground">Registre faltas e notifique responsáveis</p>
-        </div>
-        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" /> Registrar Falta</Button>}
-      </div>
+      <PageHeader
+        title="Controle de Faltas"
+        description="Registre e notifique responsáveis"
+        action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Registrar Falta</Button> : undefined}
+      />
 
       {atRisk.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">

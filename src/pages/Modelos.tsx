@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Copy, Tag } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp, MessageTemplate } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 

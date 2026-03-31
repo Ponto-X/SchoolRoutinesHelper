@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Search, Phone, Mail, School } from "lucide-react";
 import { getSupabase } from "@/lib/supabase";
 import { TURMAS, ROLES } from "@/lib/constants";
+import { PageHeader } from "@/components/PageHeader";
 import { useApp } from "@/context/AppContext";
 import { useToast } from "@/hooks/use-toast";
 import { ListCard } from "@/components/ListCard";
@@ -108,13 +109,11 @@ export default function Colaboradores() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Colaboradores</h1>
-          <p className="text-muted-foreground">Equipe do colégio</p>
-        </div>
-        {canEdit && <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo</Button>}
-      </div>
+      <PageHeader
+        title="Colaboradores"
+        description="Equipe do colégio"
+        action={canEdit ? <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />Novo</Button> : undefined}
+      />
 
       {/* Role counts */}
       <div className="flex gap-2 overflow-x-auto pb-1">
