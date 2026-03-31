@@ -175,8 +175,13 @@ export default function Alunos() {
             }
             details={[
               ...(student.parentName ? [{ icon: <UserRound className="h-3 w-3 text-purple-400" />, label: student.parentName }] : []),
-              ...(student.parentPhone ? [{ icon: <Phone className="h-3 w-3 text-green-500" />, label: student.parentPhone }] : []),
-              ...(student.birthDate ? [{ icon: <CalendarDays className="h-3 w-3 text-orange-400" />, label: new Date(student.birthDate).toLocaleDateString("pt-BR") }] : []),
+              ...((student.parentPhone || student.birthDate) ? [{
+                icon: <Phone className="h-3 w-3 text-green-500" />,
+                label: [
+                  student.parentPhone,
+                  student.birthDate ? new Date(student.birthDate).toLocaleDateString("pt-BR") : null
+                ].filter(Boolean).join("  ·  ")
+              }] : []),
             ]}
             note={student.notes}
             canEdit={canEdit}
