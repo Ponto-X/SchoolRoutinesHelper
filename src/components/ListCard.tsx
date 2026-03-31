@@ -39,7 +39,7 @@ export function ListCard({ initial, avatarColor = "blue", title, badges, details
         <div className={cn("w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm", AVATAR[avatarColor])}>
           {initial}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-hidden">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-semibold text-sm truncate">{title}</p>
             {badges}
@@ -48,7 +48,7 @@ export function ListCard({ initial, avatarColor = "blue", title, badges, details
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
               {details.map((d, i) => (
                 <span key={i} className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  {d.icon}<span className="truncate max-w-[240px]">{d.label}</span>
+                  {d.icon}<span className="truncate">{d.label}</span>
                 </span>
               ))}
             </div>
